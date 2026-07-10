@@ -5,7 +5,7 @@ from .data_loader import get_price_history
 from .database import get_connection
 
 SIMILAR_LIMIT = 3
-COMBO_CANDIDATE_POOL = 10
+COMBO_CANDIDATE_POOL = 15
 COMBO_RESULT_LIMIT = 2
 MOMENTUM_SHORT_DAYS = 20
 MOMENTUM_LONG_DAYS = 60
@@ -48,8 +48,60 @@ def _daily_returns(code: str) -> pd.Series:
     return prices.pct_change().dropna()
 
 
+def _subject_particle(word: str) -> str:
+    """받침 유무에 따라 이/가 조사를 고른다 (한글이 아니면 '이(가)')."""
+    if not word:
+        return "이(가)"
+    last = word[-1]
+    if "가" <= last <= "힣":
+        return "이" if (ord(last) - ord("가")) % 28 else "가"
+    return "이(가)"
+
+
+def _analyze_pair(target_name: str, joined: pd.DataFrame) -> dict | None:
+    """타깃이 오른 날 기준으로 동반 상승 정도를 다각도로 측정한다.
+
+    - correlation: 일별 수익률 피어슨 상관계수 (전체 동조성)
+    - hit_rate: 타깃 상승일 중 피어 종목도 함께 오른 날의 비율 (동반 상승 확률)
+    - upside_capture: 타깃 상승일의 피어 평균 수익률 / 타깃 평균 수익률 (상승 민감도)
+    - score: 위 지표를 합성한 0~100 수혜 점수
+    """
+    corr = joined["target"].corr(joined["peer"])
+    if corr is None or pd.isna(corr) or corr <= 0:
+        return None
+
+    up_days = joined[joined["target"] > 0]
+    if len(up_days) < 10:
+        return None
+
+    hit_rate = float((up_days["peer"] > 0).mean())
+    target_up_avg = float(up_days["target"].mean())
+    peer_on_up_avg = float(up_days["peer"].mean())
+    upside_capture = peer_on_up_avg / target_up_avg if target_up_avg > 0 else 0.0
+
+    # 동반 상승 확률을 가장 무겁게, 동조성과 민감도를 보조 지표로 합성
+    score = (
+        hit_rate * 55
+        + min(max(corr, 0), 1) * 30
+        + min(max(upside_capture, 0), 1.5) / 1.5 * 15
+    )
+
+    reason = (
+        f"{target_name}{_subject_particle(target_name)} 오른 날의 {hit_rate * 100:.0f}%에서 함께 상승했고, "
+        f"그런 날 평균적으로 {target_name} 상승분의 {upside_capture * 100:.0f}% 수준으로 올랐습니다."
+    )
+
+    return {
+        "correlation": round(float(corr), 3),
+        "hit_rate": round(hit_rate, 3),
+        "upside_capture": round(upside_capture, 2),
+        "score": round(score, 1),
+        "reason": reason,
+    }
+
+
 def find_combo_candidates(code: str):
-    """같은 업종 내에서 상관계수가 높아(주가가 함께 오르는 수혜 관계) 종목을 찾는다."""
+    """같은 업종 내에서 타깃 상승일에 함께 오르는 경향(수혜 관계)이 강한 종목을 찾는다."""
     stock, peers = find_similar(code, limit=COMBO_CANDIDATE_POOL)
     if not stock:
         return None, []
@@ -67,13 +119,12 @@ def find_combo_candidates(code: str):
         joined.columns = ["target", "peer"]
         if len(joined) < 20:
             continue
-        corr = joined["target"].corr(joined["peer"])
-        if corr is None or pd.isna(corr):
+        metrics = _analyze_pair(stock["name"], joined)
+        if metrics is None:
             continue
-        results.append({**peer, "correlation": round(float(corr), 3)})
+        results.append({**peer, **metrics})
 
-    results = [r for r in results if r["correlation"] > 0]
-    results.sort(key=lambda r: r["correlation"], reverse=True)
+    results.sort(key=lambda r: r["score"], reverse=True)
     return stock, results[:COMBO_RESULT_LIMIT]
 
 

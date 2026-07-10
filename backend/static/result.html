@@ -48,6 +48,13 @@
         <div class="h-full rounded-full" style="width:${pct}%; background:${color};"></div>
       </div>`;
   }
+  function scoreBadge(score) {
+    const label = score >= 70 ? "강한 동조" : score >= 50 ? "뚜렷한 동조" : "약한 동조";
+    const bg = score >= 70 ? "#fef2f2" : score >= 50 ? "#fffbeb" : "#f0fdf4";
+    const fg = score >= 70 ? "#dc2626" : score >= 50 ? "#d97706" : "#16a34a";
+    return `<span class="text-[11px] font-bold px-2 py-1 rounded-full shrink-0"
+      style="background:${bg}; color:${fg};">수혜 점수 ${score} · ${label}</span>`;
+  }
   function trendIcon(label) {
     if (label === "상승") return "📈";
     if (label === "하락") return "📉";
@@ -94,31 +101,50 @@
 
       <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-4">
         <h2 class="font-bold text-slate-800 mb-1">🚀 함께 오르는 종목 (수혜주)</h2>
-        <p class="text-xs text-slate-400 mb-3">상관계수 기준 · ${stock.name} 주가가 오를 때 같이 오르는 경향이 강한 순</p>
+        <p class="text-xs text-slate-400 mb-3">최근 6개월간 ${stock.name} 상승일의 동반 상승 이력을 분석한 결과입니다</p>
         ${
           combo.length === 0
             ? `<div class="text-sm text-slate-400">함께 움직이는 종목을 찾지 못했습니다 (가격 데이터 부족 또는 양의 상관관계 없음).</div>`
             : combo
                 .map(
                   (c) => `
-              <div class="border-b border-slate-100 last:border-0 py-2.5">
+              <div class="border-b border-slate-100 last:border-0 py-4">
                 <div class="flex gap-3">
                   ${avatarHtml(c.name, c.code)}
                   <div class="flex-1 min-w-0">
-                    <div class="flex items-baseline gap-1.5">
-                      <span class="text-sm font-medium text-slate-800 truncate">${c.name}</span>
-                      <span class="text-slate-400 text-xs shrink-0">${c.code}</span>
+                    <div class="flex items-center justify-between gap-2">
+                      <div class="flex items-baseline gap-1.5 min-w-0">
+                        <span class="text-sm font-medium text-slate-800 truncate">${c.name}</span>
+                        <span class="text-slate-400 text-xs shrink-0">${c.code}</span>
+                      </div>
+                      ${scoreBadge(c.score)}
                     </div>
-                    <div class="flex items-center gap-3 mt-2">
-                      ${corrBar(c.correlation)}
-                      <span class="text-xs text-slate-500 shrink-0">상관계수 ${c.correlation}</span>
-                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed mt-1.5">${c.reason}</p>
+                  </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 mt-3">
+                  <div class="bg-slate-50 rounded-xl px-3 py-2">
+                    <div class="text-[10px] text-slate-400">동반 상승 확률</div>
+                    <div class="text-sm font-bold text-slate-800">${(c.hit_rate * 100).toFixed(0)}%</div>
+                  </div>
+                  <div class="bg-slate-50 rounded-xl px-3 py-2">
+                    <div class="text-[10px] text-slate-400">상승 민감도</div>
+                    <div class="text-sm font-bold text-slate-800">${(c.upside_capture * 100).toFixed(0)}%</div>
+                  </div>
+                  <div class="bg-slate-50 rounded-xl px-3 py-2">
+                    <div class="text-[10px] text-slate-400">상관계수</div>
+                    <div class="text-sm font-bold text-slate-800">${c.correlation}</div>
                   </div>
                 </div>
               </div>`
                 )
                 .join("")
         }
+        <p class="text-[11px] text-slate-400 mt-3 leading-relaxed">
+          * 동반 상승 확률: ${stock.name} 상승일 중 해당 종목도 함께 오른 날의 비율 ·
+          상승 민감도: 그런 날 ${stock.name} 상승분 대비 해당 종목의 평균 상승 폭 ·
+          수혜 점수: 두 지표와 상관계수를 합성한 0~100점 지표
+        </p>
       </div>
 
       <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-4">
