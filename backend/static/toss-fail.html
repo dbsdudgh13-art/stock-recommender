@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>결제 실패</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<style>
+  body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; }
+</style>
+</head>
+<body class="min-h-screen flex items-center justify-center" style="background: radial-gradient(1200px 500px at 50% -10%, #eef2ff, #f8fafc);">
+  <div class="bg-white/90 backdrop-blur rounded-2xl shadow-lg shadow-indigo-100 border border-white p-8 max-w-sm w-full text-center">
+    <div class="text-3xl mb-2">😥</div>
+    <h1 class="font-bold text-slate-800 mb-1">결제가 완료되지 않았습니다</h1>
+    <p class="text-sm text-slate-500 mb-4" id="reason"></p>
+    <a href="/static/index.html" class="text-indigo-600 text-sm font-medium hover:underline">검색으로 돌아가기</a>
+  </div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  document.getElementById("reason").textContent = params.get("message") || "결제가 취소되었거나 문제가 발생했습니다.";
+</script>
+</body>
+</html>

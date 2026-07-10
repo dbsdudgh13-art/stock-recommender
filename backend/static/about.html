@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>소개 · 문의 | 종목 유사/조합 추천</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<style>
+  body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; }
+</style>
+</head>
+<body class="min-h-screen" style="background: radial-gradient(1200px 500px at 50% -10%, #eef2ff, #f8fafc);">
+  <div class="max-w-2xl mx-auto px-4 py-10">
+    <a href="/static/index.html" class="text-sm text-indigo-600 hover:underline">← 홈으로 돌아가기</a>
+
+    <div class="bg-white/90 backdrop-blur rounded-2xl shadow-lg shadow-indigo-100 border border-white p-8 mt-4 text-sm text-slate-700 leading-relaxed space-y-5">
+      <h1 class="text-xl font-extrabold text-slate-900">소개</h1>
+      <p>
+        <strong>종목 유사/조합 추천</strong>은 국내(코스피·코스닥) 종목을 검색하면 같은 분야의 유사 종목과,
+        상관계수 기반으로 함께 움직이는 종목·업종 방향성 정보를 제공하는 서비스입니다.
+        모든 정보는 과거 시세 데이터를 기반으로 한 규칙 기반 통계이며, 투자자문이 아닙니다.
+      </p>
+
+      <section>
+        <h2 class="font-bold text-slate-800 mb-1">데이터 출처</h2>
+        <p>종목·업종·시세 데이터는 FinanceDataReader(KRX 공개 데이터)를 통해 제공됩니다.</p>
+      </section>
+
+      <section>
+        <h2 class="font-bold text-slate-800 mb-1">문의</h2>
+        <p>서비스 이용 중 문의사항이나 오류 제보는 아래 이메일로 연락해 주세요.</p>
+        <p class="font-medium text-slate-800 mt-1">contact@example.com</p>
+        <p class="text-xs text-slate-400 mt-1">(운영자 이메일 주소로 교체해 사용하세요)</p>
+      </section>
+
+      <div class="flex gap-4 text-xs text-slate-400 pt-2 border-t border-slate-100">
+        <a href="/static/privacy.html" class="hover:underline">개인정보처리방침</a>
+        <a href="/static/terms.html" class="hover:underline">이용약관</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

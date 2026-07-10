@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>오늘의 시황 | 종목 유사/조합 추천</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<style>
+  body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; }
+</style>
+</head>
+<body class="min-h-screen" style="background: radial-gradient(1200px 500px at 50% -10%, #eef2ff, #f8fafc);">
+  <div class="max-w-2xl mx-auto px-4 py-10">
+    <a href="/static/index.html" class="text-sm text-indigo-600 hover:underline">← 홈으로 돌아가기</a>
+    <h1 class="text-2xl font-extrabold text-slate-900 mt-3 mb-1">📰 오늘의 시황</h1>
+    <p class="text-sm text-slate-500 mb-6">규칙 기반 통계로 요약한 시장 동향입니다. 투자자문이 아닙니다.</p>
+
+    <div id="list" class="space-y-3">
+      <div class="text-sm text-slate-400">불러오는 중...</div>
+    </div>
+
+    <footer class="mt-12 pt-6 border-t border-slate-200 flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-400">
+      <a href="/static/about.html" class="hover:underline">소개 · 문의</a>
+      <a href="/static/privacy.html" class="hover:underline">개인정보처리방침</a>
+      <a href="/static/terms.html" class="hover:underline">이용약관</a>
+    </footer>
+  </div>
+
+<script>
+  async function load() {
+    const list = document.getElementById("list");
+    const res = await fetch("/api/posts");
+    const posts = await res.json();
+    if (posts.length === 0) {
+      list.innerHTML = `<div class="text-sm text-slate-400">아직 등록된 글이 없습니다.</div>`;
+      return;
+    }
+    list.innerHTML = posts
+      .map(
+        (p) => `
+      <a href="/static/blog-post.html?id=${p.id}" class="block bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover:shadow-md hover:border-indigo-100 transition">
+        <div class="font-semibold text-slate-800">${p.title}</div>
+        <div class="text-xs text-slate-400 mt-1">${new Date(p.created_at).toLocaleDateString("ko-KR")}</div>
+      </a>`
+      )
+      .join("");
+  }
+  load();
+</script>
+</body>
+</html>

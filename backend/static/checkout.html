@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>결제</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://js.tosspayments.com/v1/payment-widget"></script>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<style>
+  body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; }
+</style>
+</head>
+<body class="min-h-screen" style="background: radial-gradient(1200px 500px at 50% -10%, #eef2ff, #f8fafc);">
+  <div class="max-w-md mx-auto px-4 py-8">
+    <a href="/static/index.html" class="text-sm text-indigo-600 hover:underline">← 검색으로 돌아가기</a>
+
+    <div id="notConfiguredBanner" class="hidden text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl p-3 mt-4 leading-relaxed">
+      ⚠️ 아직 결제 승인 키가 설정되지 않아 결제위젯 화면만 미리보기로 표시됩니다. 실제 결제를 완료하려면
+      서버에 <code class="font-mono">TOSS_CLIENT_KEY</code>, <code class="font-mono">TOSS_SECRET_KEY</code> 환경변수를 설정해야 합니다.
+    </div>
+
+    <div class="bg-white/90 backdrop-blur rounded-2xl shadow-lg shadow-indigo-100 border border-white p-6 mt-3">
+      <div class="text-xs font-semibold text-amber-600 bg-amber-50 inline-block px-2.5 py-1 rounded-full mb-3">
+        🧪 토스페이먼츠 테스트 모드 · 실제 결제 아님
+      </div>
+      <h1 class="text-lg font-bold text-slate-900 mb-1" id="orderName">결제</h1>
+      <div class="text-2xl font-extrabold text-slate-900 mb-4" id="amountText"></div>
+
+      <div id="widgetError" class="hidden text-sm text-red-500 bg-red-50 rounded-xl p-3 mb-3"></div>
+      <div id="payment-widget"></div>
+      <div id="agreement" class="mt-2"></div>
+
+      <button id="payBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-semibold shadow-sm transition mt-4">
+        결제하기
+      </button>
+      <p class="text-[11px] text-slate-400 mt-3 leading-relaxed">
+        테스트 모드에서는 카드 결제 시 임의의 카드번호(예: 4330-0000-0000-0000)와 유효기간·생년월일을 입력해도 결제가 진행됩니다.
+        토스페이·카카오페이 등 간편결제 탭에서도 테스트 승인이 가능합니다.
+      </p>
+    </div>
+  </div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get("code");
+  const orderId = params.get("orderId");
+  const amount = Number(params.get("amount"));
+  const orderName = params.get("orderName") || "결제";
+  const clientKey = params.get("clientKey");
+  const configured = params.get("configured") === "1";
+
+  document.getElementById("orderName").textContent = orderName;
+  document.getElementById("amountText").textContent = amount.toLocaleString() + "원";
+  if (!configured) {
+    document.getElementById("notConfiguredBanner").classList.remove("hidden");
+  }
+
+  async function init() {
+    try {
+      const paymentWidget = PaymentWidget(clientKey, "ANONYMOUS");
+      await paymentWidget.renderPaymentMethods("#payment-widget", { value: amount });
+      await paymentWidget.renderAgreement("#agreement");
+
+      document.getElementById("payBtn").addEventListener("click", async () => {
+        const btn = document.getElementById("payBtn");
+        btn.disabled = true;
+        btn.textContent = "처리 중...";
+        try {
+          await paymentWidget.requestPayment({
+            orderId,
+            orderName,
+            successUrl: `${window.location.origin}/static/toss-success.html?code=${encodeURIComponent(code)}`,
+            failUrl: `${window.location.origin}/static/toss-fail.html?code=${encodeURIComponent(code)}`,
+            customerName: "게스트",
+          });
+        } catch (e) {
+          alert("결제 요청 중 문제가 발생했습니다: " + (e?.message || e));
+          btn.disabled = false;
+          btn.textContent = "결제하기";
+        }
+      });
+    } catch (e) {
+      const errEl = document.getElementById("widgetError");
+      errEl.textContent = "결제 위젯을 불러오지 못했습니다: " + (e?.message || e);
+      errEl.classList.remove("hidden");
+      document.getElementById("payBtn").disabled = true;
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>결제 확인 중</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<style>
+  body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; }
+</style>
+</head>
+<body class="min-h-screen flex items-center justify-center" style="background: radial-gradient(1200px 500px at 50% -10%, #eef2ff, #f8fafc);">
+  <div class="bg-white/90 backdrop-blur rounded-2xl shadow-lg shadow-indigo-100 border border-white p-8 max-w-sm w-full text-center">
+    <div id="content" class="text-sm text-slate-500">결제 승인을 확인하는 중입니다...</div>
+  </div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get("code");
+  const paymentKey = params.get("paymentKey");
+  const orderId = params.get("orderId");
+  const amount = Number(params.get("amount"));
+  const content = document.getElementById("content");
+
+  async function confirm() {
+    if (!paymentKey || !orderId || !amount) {
+      content.innerHTML = `<p class="text-red-500">결제 정보가 올바르지 않습니다.</p>`;
+      return;
+    }
+    try {
+      const res = await fetch("/api/toss/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ payment_key: paymentKey, order_id: orderId, amount }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        content.innerHTML = `<p class="text-red-500">결제 승인에 실패했습니다: ${err.detail || ""}</p>
+          <a href="/static/index.html" class="text-indigo-600 text-sm hover:underline mt-3 inline-block">검색으로 돌아가기</a>`;
+        return;
+      }
+      window.location.href = `/static/result.html?code=${encodeURIComponent(code)}&session_id=${encodeURIComponent(orderId)}`;
+    } catch (e) {
+      content.innerHTML = `<p class="text-red-500">네트워크 오류로 결제 확인에 실패했습니다.</p>`;
+    }
+  }
+
+  confirm();
+</script>
+</body>
+</html>

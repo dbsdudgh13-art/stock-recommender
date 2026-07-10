@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>오늘의 시황 | 종목 유사/조합 추천</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<style>
+  body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; }
+</style>
+</head>
+<body class="min-h-screen" style="background: radial-gradient(1200px 500px at 50% -10%, #eef2ff, #f8fafc);">
+  <div class="max-w-2xl mx-auto px-4 py-10">
+    <a href="/static/blog.html" class="text-sm text-indigo-600 hover:underline">← 오늘의 시황 목록</a>
+    <div id="content" class="mt-4">
+      <div class="text-sm text-slate-400">불러오는 중...</div>
+    </div>
+
+    <footer class="mt-12 pt-6 border-t border-slate-200 flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-400">
+      <a href="/static/about.html" class="hover:underline">소개 · 문의</a>
+      <a href="/static/privacy.html" class="hover:underline">개인정보처리방침</a>
+      <a href="/static/terms.html" class="hover:underline">이용약관</a>
+    </footer>
+  </div>
+
+<script>
+  const id = new URLSearchParams(window.location.search).get("id");
+  const content = document.getElementById("content");
+
+  async function load() {
+    const res = await fetch(`/api/posts/${id}`);
+    if (!res.ok) {
+      content.innerHTML = `<div class="text-sm text-red-500">글을 찾을 수 없습니다.</div>`;
+      return;
+    }
+    const post = await res.json();
+    document.title = post.title + " | 종목 유사/조합 추천";
+    content.innerHTML = `
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+        <h1 class="text-xl font-bold text-slate-900">${post.title}</h1>
+        <div class="text-xs text-slate-400 mt-1 mb-4">${new Date(post.created_at).toLocaleDateString("ko-KR")}</div>
+        <div class="text-sm text-slate-700 leading-relaxed whitespace-pre-line">${post.body}</div>
+      </div>
+      <div class="text-xs text-slate-400 bg-slate-100/80 rounded-xl p-3 mt-4">
+        ⚠️ 본 정보는 과거 가격 데이터에 기반한 규칙 기반 통계 정보 제공이며, 투자 자문이나 매수/매도 추천이 아닙니다.
+      </div>
+    `;
+  }
+  load();
+</script>
+</body>
+</html>
