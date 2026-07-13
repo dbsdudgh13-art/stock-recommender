@@ -78,7 +78,7 @@
   async function load() {
     const res = await fetch(`/api/combo/${code}?session_id=${encodeURIComponent(sessionId)}`);
     if (res.status === 402) {
-      content.innerHTML = `<div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 text-sm text-red-500">결제가 확인되지 않았습니다. 검색 페이지에서 다시 결제해 주세요.</div>`;
+      content.innerHTML = `<div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 text-sm text-red-500">결제가 확인되지 않았습니다. 검색 페이지에서 다시 시도해 주세요.</div>`;
       return;
     }
     if (!res.ok) {

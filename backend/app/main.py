@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Query
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -13,6 +13,8 @@ from . import payments, recommender
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "").strip()
+# 배포 환경에서는 프록시 뒤라 request.base_url이 http로 잡힐 수 있어 명시 설정을 우선한다
+PUBLIC_BASE_URL = os.environ.get("PUBLIC_BASE_URL", "").strip().rstrip("/")
 
 app = FastAPI(title="종목 유사/조합 추천 MVP")
 
@@ -96,25 +98,21 @@ def similar_stocks(code: str):
 
 
 @app.post("/api/checkout/{code}")
-def create_checkout(code: str):
+def create_checkout(code: str, request: Request):
     stock = recommender.get_stock(code)
     if not stock:
         raise HTTPException(status_code=404, detail="존재하지 않는 종목 코드입니다.")
-    return payments.create_checkout_session(code, stock["name"])
+    base_url = PUBLIC_BASE_URL or str(request.base_url).rstrip("/")
+    return payments.create_checkout_session(code, stock["name"], base_url)
 
 
-class TossConfirmRequest(BaseModel):
-    payment_key: str
-    order_id: str
-    amount: int
-
-
-@app.post("/api/toss/confirm")
-def toss_confirm(body: TossConfirmRequest):
-    ok, message = payments.confirm_payment(body.payment_key, body.order_id, body.amount)
-    if not ok:
-        raise HTTPException(status_code=400, detail=message)
-    return {"status": "paid", "message": message}
+@app.get("/api/pay/return")
+def pay_return(code: str, order_no: str, payToken: str | None = Query(None)):
+    """토스페이 인증 완료 후 돌아오는 지점. 승인을 마무리하고 결과 페이지로 보낸다."""
+    payments.confirm_return(order_no, payToken)
+    return RedirectResponse(
+        url=f"/static/result.html?code={code}&session_id={order_no}"
+    )
 
 
 @app.get("/api/combo/{code}")

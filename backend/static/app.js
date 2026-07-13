@@ -167,7 +167,7 @@ async function showSimilar(code) {
         </div>
       </div>
       <button id="unlockBtn" class="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-sm">
-        🚀 수혜주 · 방향성 보기
+        🚀 수혜주 · 방향성 보기 · 1,000원
       </button>
     </div>
     <div>
@@ -188,19 +188,19 @@ async function showSimilar(code) {
 async function startCheckout(code) {
   const res = await fetch(`/api/checkout/${code}`, { method: "POST" });
   if (!res.ok) {
-    alert("결제 세션 생성에 실패했습니다.");
+    alert("결제 요청에 실패했습니다. 잠시 후 다시 시도해주세요.");
     return;
   }
   const data = await res.json();
-  const params = new URLSearchParams({
-    code,
-    orderId: data.order_id,
-    amount: data.amount,
-    orderName: data.order_name,
-    clientKey: data.client_key,
-    configured: data.configured ? "1" : "0",
-  });
-  window.location.href = `/static/checkout.html?${params.toString()}`;
+  if (!data.configured) {
+    alert("결제 수단(토스페이)을 준비 중입니다. 조금만 기다려주세요!");
+    return;
+  }
+  if (data.error) {
+    alert(data.error);
+    return;
+  }
+  window.location.href = data.checkout_url;
 }
 
 document.getElementById("searchBtn").addEventListener("click", search);

@@ -1,13 +1,10 @@
-"""토스페이먼츠 결제 연동.
+"""토스페이(토스 간편결제 직접 계약, pay.toss.im) 연동.
 
-결제위젯을 쓰면 카드, 토스페이, 카카오페이 등을 사용자가 화면에서 선택할 수 있다.
-TOSS_CLIENT_KEY는 토스페이먼츠가 공개 문서에서 제공하는 위젯 미리보기용 데모 키를 기본값으로 사용해
-결제위젯 화면은 설정 없이도 바로 보인다. 다만 실제 결제 승인(서버 confirm 호출)은 본인 계정의
-테스트 시크릿 키가 있어야 동작하므로, TOSS_SECRET_KEY(그리고 TOSS_CLIENT_KEY)를
-토스페이먼츠 개발자센터(https://developers.tosspayments.com)에서 무료로 즉시 발급받아
-환경변수로 설정해야 한다. (사업자 등록 없이 이메일 가입만으로 테스트 키 발급 가능)
+가입비·연회비 없는 토스페이 직접 계약용 API(v2) 연동이다. 결제 수단은 '토스 앱 결제' 단일.
+TOSSPAY_API_KEY 환경변수에 상점 API 키(가입 승인 후 토스페이 상점 관리에서 발급)를 설정하면
+결제가 활성화되고, 미설정 상태에서는 결제 버튼이 '준비 중' 안내만 표시한다.
+테스트 키와 실거래 키가 구분되므로 운영 반영 시 실거래 키인지 확인할 것.
 """
-import base64
 import os
 import uuid
 from datetime import datetime
@@ -16,75 +13,112 @@ import requests
 
 from .database import get_connection
 
-# 토스페이먼츠 공식 문서에 공개된 결제위젯 미리보기 전용 데모 클라이언트 키 (렌더링만 가능, 실결제 승인 불가)
-_DOCS_DEMO_CLIENT_KEY = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm"
-
-TOSS_CLIENT_KEY = os.environ.get("TOSS_CLIENT_KEY", "").strip() or _DOCS_DEMO_CLIENT_KEY
-TOSS_SECRET_KEY = os.environ.get("TOSS_SECRET_KEY", "").strip()
-TOSS_CONFIGURED = bool(os.environ.get("TOSS_CLIENT_KEY", "").strip() and TOSS_SECRET_KEY)
+TOSSPAY_API_URL = "https://pay.toss.im/api/v2"
+TOSSPAY_API_KEY = os.environ.get("TOSSPAY_API_KEY", "").strip()
 COMBO_PRICE_KRW = int(os.environ.get("COMBO_PRICE_KRW", "1000"))
+CONFIGURED = bool(TOSSPAY_API_KEY)
 
-TOSS_CONFIRM_URL = "https://api.tosspayments.com/v1/payments/confirm"
 
-
-def create_checkout_session(code: str, stock_name: str) -> dict:
-    order_id = f"order_{uuid.uuid4().hex}"
+def _save_session(order_no: str, code: str) -> None:
     conn = get_connection()
     try:
         conn.execute(
             "INSERT INTO checkout_sessions (session_id, code, status, is_mock, created_at) VALUES (?, ?, 'pending', 0, ?)",
-            (order_id, code, datetime.utcnow().isoformat()),
+            (order_no, code, datetime.utcnow().isoformat()),
         )
         conn.commit()
     finally:
         conn.close()
 
-    return {
-        "order_id": order_id,
-        "amount": COMBO_PRICE_KRW,
-        "order_name": f"{stock_name} 조합 종목·방향성 분석",
-        "client_key": TOSS_CLIENT_KEY,
-        "configured": TOSS_CONFIGURED,
-    }
+
+def create_checkout_session(code: str, stock_name: str, base_url: str) -> dict:
+    if not CONFIGURED:
+        return {"configured": False}
+
+    order_no = f"order_{uuid.uuid4().hex}"
+    res = requests.post(
+        f"{TOSSPAY_API_URL}/payments",
+        json={
+            "orderNo": order_no,
+            "amount": COMBO_PRICE_KRW,
+            "amountTaxFree": 0,
+            "productDesc": f"{stock_name} 수혜주·방향성 분석",
+            "apiKey": TOSSPAY_API_KEY,
+            "autoExecute": False,
+            "retUrl": f"{base_url}/api/pay/return?code={code}&order_no={order_no}",
+            "retCancelUrl": f"{base_url}/static/index.html",
+        },
+        timeout=10,
+    )
+    data = res.json()
+    if res.status_code != 200 or data.get("code") != 0:
+        return {"configured": True, "error": data.get("msg") or "결제 생성에 실패했습니다."}
+
+    _save_session(order_no, code)
+    return {"configured": True, "checkout_url": data["checkoutPage"], "order_no": order_no}
 
 
-def confirm_payment(payment_key: str, order_id: str, amount: int) -> tuple[bool, str]:
-    if not TOSS_CONFIGURED:
-        return False, (
-            "결제 기능이 아직 설정되지 않았습니다. 토스페이먼츠 개발자센터에서 테스트 키를 발급받아 "
-            "TOSS_CLIENT_KEY / TOSS_SECRET_KEY 환경변수로 설정한 뒤 서버를 다시 시작해 주세요."
+def _get_status(order_no: str) -> dict:
+    res = requests.post(
+        f"{TOSSPAY_API_URL}/status",
+        json={"apiKey": TOSSPAY_API_KEY, "orderNo": order_no},
+        timeout=10,
+    )
+    return res.json()
+
+
+def _execute(pay_token: str) -> dict:
+    res = requests.post(
+        f"{TOSSPAY_API_URL}/execute",
+        json={"apiKey": TOSSPAY_API_KEY, "payToken": pay_token},
+        timeout=10,
+    )
+    return res.json()
+
+
+def _mark_paid(order_no: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE checkout_sessions SET status = 'paid' WHERE session_id = ?", (order_no,)
         )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def confirm_return(order_no: str, pay_token: str | None = None) -> bool:
+    """토스페이 인증 완료 후 retUrl로 돌아왔을 때 승인·검증을 마무리한다."""
+    if not CONFIGURED:
+        return False
 
     conn = get_connection()
     try:
         row = conn.execute(
-            "SELECT * FROM checkout_sessions WHERE session_id = ?", (order_id,)
+            "SELECT * FROM checkout_sessions WHERE session_id = ?", (order_no,)
         ).fetchone()
-        if not row:
-            return False, "존재하지 않는 주문입니다."
-        if row["status"] == "paid":
-            return True, "이미 결제 완료된 주문입니다."
-        if amount != COMBO_PRICE_KRW:
-            return False, "결제 금액이 일치하지 않습니다."
-
-        auth = base64.b64encode(f"{TOSS_SECRET_KEY}:".encode()).decode()
-        res = requests.post(
-            TOSS_CONFIRM_URL,
-            json={"paymentKey": payment_key, "orderId": order_id, "amount": amount},
-            headers={"Authorization": f"Basic {auth}", "Content-Type": "application/json"},
-            timeout=10,
-        )
-        if res.status_code != 200:
-            detail = res.json().get("message", "결제 승인에 실패했습니다.")
-            return False, detail
-
-        conn.execute(
-            "UPDATE checkout_sessions SET status = 'paid' WHERE session_id = ?", (order_id,)
-        )
-        conn.commit()
-        return True, "결제가 완료되었습니다."
     finally:
         conn.close()
+    if not row:
+        return False
+    if row["status"] == "paid":
+        return True
+
+    status = _get_status(order_no)
+    pay_status = status.get("payStatus")
+
+    if pay_status == "PAY_APPROVED":
+        token = pay_token or status.get("payToken")
+        if not token:
+            return False
+        _execute(token)
+        status = _get_status(order_no)
+        pay_status = status.get("payStatus")
+
+    if pay_status == "PAY_COMPLETE":
+        _mark_paid(order_no)
+        return True
+    return False
 
 
 def is_session_paid(session_id: str, code: str) -> bool:
