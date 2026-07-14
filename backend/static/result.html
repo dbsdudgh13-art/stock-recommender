@@ -93,7 +93,15 @@
     const { stock, combo, direction } = data;
     const shortLabel = trendLabelOf(direction.short_term_change_pct);
 
+    const sampleBanner = sessionId === "sample"
+      ? `<div class="bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-medium rounded-xl p-3 mb-4">
+          👀 삼성전자 종목으로 제공되는 <strong>무료 샘플 미리보기</strong>입니다. 다른 종목의 분석은
+          <a href="/static/pricing.html" class="underline font-semibold">이용권 안내</a>를 참고해 주세요.
+        </div>`
+      : "";
+
     content.innerHTML = `
+      ${sampleBanner}
       <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-4 flex items-center gap-4">
         ${avatarHtml(stock.name, stock.code)}
         <div class="flex-1 min-w-0">

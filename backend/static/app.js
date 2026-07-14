@@ -181,26 +181,11 @@ async function showSimilar(code) {
   similarPanelEl.innerHTML = "";
   similarPanelEl.appendChild(wrap);
 
-  document.getElementById("unlockBtn").addEventListener("click", () => startCheckout(stock.code));
+  document.getElementById("unlockBtn").addEventListener("click", () => {
+    const q = new URLSearchParams({ code: stock.code, name: stock.name });
+    window.location.href = `/static/pricing.html?${q.toString()}`;
+  });
   similarPanelEl.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-async function startCheckout(code) {
-  const res = await fetch(`/api/checkout/${code}`, { method: "POST" });
-  if (!res.ok) {
-    alert("결제 요청에 실패했습니다. 잠시 후 다시 시도해주세요.");
-    return;
-  }
-  const data = await res.json();
-  if (!data.configured) {
-    alert("결제 수단(토스페이)을 준비 중입니다. 조금만 기다려주세요!");
-    return;
-  }
-  if (data.error) {
-    alert(data.error);
-    return;
-  }
-  window.location.href = data.checkout_url;
 }
 
 document.getElementById("searchBtn").addEventListener("click", search);

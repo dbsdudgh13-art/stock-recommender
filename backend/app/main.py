@@ -115,9 +115,14 @@ def pay_return(code: str, order_no: str, payToken: str | None = Query(None)):
     )
 
 
+# 판매 상품 확인용 무료 샘플 종목 (이용권 안내 페이지의 '샘플 미리보기'에서 사용)
+SAMPLE_CODE = "005930"
+
+
 @app.get("/api/combo/{code}")
 def combo(code: str, session_id: str = Query(...)):
-    if not payments.is_session_paid(session_id, code):
+    is_sample = session_id == "sample" and code == SAMPLE_CODE
+    if not is_sample and not payments.is_session_paid(session_id, code):
         raise HTTPException(status_code=402, detail="결제가 완료되지 않았습니다.")
 
     stock, candidates = recommender.find_combo_candidates(code)

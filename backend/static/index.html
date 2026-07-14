@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>종목 유사/조합 추천 (MVP)</title>
+<title>스톡메이트(StockMate) - 종목 유사·수혜주 분석</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
 <style>
@@ -13,8 +13,9 @@
 <body class="min-h-screen" style="background: radial-gradient(1200px 500px at 50% -10%, #eef2ff, #f8fafc);">
   <div class="max-w-3xl mx-auto px-4 py-10">
     <div class="mb-8">
-      <div class="inline-flex items-center gap-2 bg-indigo-600/10 text-indigo-700 text-xs font-semibold px-3 py-1 rounded-full mb-3">
-        📈 국내 코스피 · 코스닥
+      <div class="flex items-center gap-2 mb-3">
+        <span class="inline-flex items-center gap-2 bg-indigo-600/10 text-indigo-700 text-xs font-semibold px-3 py-1 rounded-full">📈 국내 코스피 · 코스닥</span>
+        <span class="text-xs font-bold text-indigo-600 tracking-wide">STOCKMATE 스톡메이트</span>
       </div>
       <h1 class="text-3xl font-extrabold text-slate-900 mb-2 tracking-tight">종목 유사/조합 추천</h1>
       <p class="text-sm text-slate-500 leading-relaxed">종목을 검색하면 같은 분야의 유사 종목을 무료로 보여드려요.<br/>
@@ -53,6 +54,7 @@
 
     <footer class="mt-12 pt-6 border-t border-slate-200 text-xs text-slate-400">
       <div class="flex flex-wrap gap-x-4 gap-y-2">
+        <a href="/static/pricing.html" class="hover:underline">이용권 안내</a>
         <a href="/static/blog.html" class="hover:underline">오늘의 시황</a>
         <a href="/static/about.html" class="hover:underline">소개 · 문의</a>
         <a href="/static/privacy.html" class="hover:underline">개인정보처리방침</a>
@@ -62,6 +64,6 @@
     </footer>
   </div>
 
-<script src="/static/app.js?v=3"></script>
+<script src="/static/app.js?v=4"></script>
 </body>
 </html>
