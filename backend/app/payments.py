@@ -1,9 +1,11 @@
-"""토스페이(토스 간편결제 직접 계약, pay.toss.im) 연동.
+"""카카오페이 온라인 단건결제(open-api.kakaopay.com) 연동.
 
-가입비·연회비 없는 토스페이 직접 계약용 API(v2) 연동이다. 결제 수단은 '토스 앱 결제' 단일.
-TOSSPAY_API_KEY 환경변수에 상점 API 키(가입 승인 후 토스페이 상점 관리에서 발급)를 설정하면
-결제가 활성화되고, 미설정 상태에서는 결제 버튼이 '준비 중' 안내만 표시한다.
-테스트 키와 실거래 키가 구분되므로 운영 반영 시 실거래 키인지 확인할 것.
+- 결제 준비(ready) → 사용자를 카카오페이 결제창으로 리다이렉트 → 승인(approve)으로 마무리.
+- KAKAOPAY_SECRET_KEY 환경변수가 있어야 결제가 활성화된다. 미설정 시 결제 버튼은
+  '준비 중' 안내만 표시한다.
+- KAKAOPAY_CID 기본값은 테스트용 CID(TC0ONETIME). 카카오페이 비즈니스 심사 통과 후
+  발급받은 실거래 CID로 교체하면 실제 결제가 이뤄진다.
+- 테스트 CID로는 실제 출금 없이 결제 흐름 전체를 검증할 수 있다.
 """
 import os
 import uuid
@@ -13,18 +15,29 @@ import requests
 
 from .database import get_connection
 
-TOSSPAY_API_URL = "https://pay.toss.im/api/v2"
-TOSSPAY_API_KEY = os.environ.get("TOSSPAY_API_KEY", "").strip()
+KAKAOPAY_API = "https://open-api.kakaopay.com/online/v1/payment"
+KAKAOPAY_SECRET_KEY = os.environ.get("KAKAOPAY_SECRET_KEY", "").strip()
+KAKAOPAY_CID = os.environ.get("KAKAOPAY_CID", "TC0ONETIME").strip()
 COMBO_PRICE_KRW = int(os.environ.get("COMBO_PRICE_KRW", "1000"))
-CONFIGURED = bool(TOSSPAY_API_KEY)
+CONFIGURED = bool(KAKAOPAY_SECRET_KEY)
+
+PARTNER_USER_ID = "guest"  # 로그인 없는 서비스라 고정값 사용
 
 
-def _save_session(order_no: str, code: str) -> None:
+def _headers() -> dict:
+    return {
+        "Authorization": f"SECRET_KEY {KAKAOPAY_SECRET_KEY}",
+        "Content-Type": "application/json",
+    }
+
+
+def _save_session(order_id: str, code: str, tid: str) -> None:
     conn = get_connection()
     try:
         conn.execute(
-            "INSERT INTO checkout_sessions (session_id, code, status, is_mock, created_at) VALUES (?, ?, 'pending', 0, ?)",
-            (order_no, code, datetime.utcnow().isoformat()),
+            "INSERT INTO checkout_sessions (session_id, code, status, is_mock, tid, created_at) "
+            "VALUES (?, ?, 'pending', 0, ?, ?)",
+            (order_id, code, tid, datetime.utcnow().isoformat()),
         )
         conn.commit()
     finally:
@@ -35,67 +48,41 @@ def create_checkout_session(code: str, stock_name: str, base_url: str) -> dict:
     if not CONFIGURED:
         return {"configured": False}
 
-    order_no = f"order_{uuid.uuid4().hex}"
+    order_id = f"order_{uuid.uuid4().hex}"
     res = requests.post(
-        f"{TOSSPAY_API_URL}/payments",
+        f"{KAKAOPAY_API}/ready",
         json={
-            "orderNo": order_no,
-            "amount": COMBO_PRICE_KRW,
-            "amountTaxFree": 0,
-            "productDesc": f"{stock_name} 수혜주·방향성 분석",
-            "apiKey": TOSSPAY_API_KEY,
-            "autoExecute": False,
-            "retUrl": f"{base_url}/api/pay/return?code={code}&order_no={order_no}",
-            "retCancelUrl": f"{base_url}/static/index.html",
+            "cid": KAKAOPAY_CID,
+            "partner_order_id": order_id,
+            "partner_user_id": PARTNER_USER_ID,
+            "item_name": f"{stock_name} 종목 통계 분석 콘텐츠",
+            "quantity": 1,
+            "total_amount": COMBO_PRICE_KRW,
+            "tax_free_amount": 0,
+            "approval_url": f"{base_url}/api/pay/kakao/approve?code={code}&order_id={order_id}",
+            "cancel_url": f"{base_url}/static/pricing.html?code={code}",
+            "fail_url": f"{base_url}/static/pricing.html?code={code}",
         },
+        headers=_headers(),
         timeout=10,
     )
+    if res.status_code != 200:
+        detail = _safe_msg(res)
+        return {"configured": True, "error": detail}
+
     data = res.json()
-    if res.status_code != 200 or data.get("code") != 0:
-        return {"configured": True, "error": data.get("msg") or "결제 생성에 실패했습니다."}
-
-    _save_session(order_no, code)
-    return {"configured": True, "checkout_url": data["checkoutPage"], "order_no": order_no}
+    _save_session(order_id, code, data["tid"])
+    return {"configured": True, "checkout_url": data["next_redirect_pc_url"]}
 
 
-def _get_status(order_no: str) -> dict:
-    res = requests.post(
-        f"{TOSSPAY_API_URL}/status",
-        json={"apiKey": TOSSPAY_API_KEY, "orderNo": order_no},
-        timeout=10,
-    )
-    return res.json()
-
-
-def _execute(pay_token: str) -> dict:
-    res = requests.post(
-        f"{TOSSPAY_API_URL}/execute",
-        json={"apiKey": TOSSPAY_API_KEY, "payToken": pay_token},
-        timeout=10,
-    )
-    return res.json()
-
-
-def _mark_paid(order_no: str) -> None:
-    conn = get_connection()
-    try:
-        conn.execute(
-            "UPDATE checkout_sessions SET status = 'paid' WHERE session_id = ?", (order_no,)
-        )
-        conn.commit()
-    finally:
-        conn.close()
-
-
-def confirm_return(order_no: str, pay_token: str | None = None) -> bool:
-    """토스페이 인증 완료 후 retUrl로 돌아왔을 때 승인·검증을 마무리한다."""
+def approve(order_id: str, pg_token: str) -> bool:
     if not CONFIGURED:
         return False
 
     conn = get_connection()
     try:
         row = conn.execute(
-            "SELECT * FROM checkout_sessions WHERE session_id = ?", (order_no,)
+            "SELECT * FROM checkout_sessions WHERE session_id = ?", (order_id,)
         ).fetchone()
     finally:
         conn.close()
@@ -104,21 +91,30 @@ def confirm_return(order_no: str, pay_token: str | None = None) -> bool:
     if row["status"] == "paid":
         return True
 
-    status = _get_status(order_no)
-    pay_status = status.get("payStatus")
+    res = requests.post(
+        f"{KAKAOPAY_API}/approve",
+        json={
+            "cid": KAKAOPAY_CID,
+            "tid": row["tid"],
+            "partner_order_id": order_id,
+            "partner_user_id": PARTNER_USER_ID,
+            "pg_token": pg_token,
+        },
+        headers=_headers(),
+        timeout=10,
+    )
+    if res.status_code != 200:
+        return False
 
-    if pay_status == "PAY_APPROVED":
-        token = pay_token or status.get("payToken")
-        if not token:
-            return False
-        _execute(token)
-        status = _get_status(order_no)
-        pay_status = status.get("payStatus")
-
-    if pay_status == "PAY_COMPLETE":
-        _mark_paid(order_no)
-        return True
-    return False
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE checkout_sessions SET status = 'paid' WHERE session_id = ?", (order_id,)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return True
 
 
 def is_session_paid(session_id: str, code: str) -> bool:
@@ -130,3 +126,10 @@ def is_session_paid(session_id: str, code: str) -> bool:
         return bool(row and row["status"] == "paid")
     finally:
         conn.close()
+
+
+def _safe_msg(res) -> str:
+    try:
+        return res.json().get("message") or res.json().get("msg") or "결제 요청에 실패했습니다."
+    except Exception:
+        return "결제 요청에 실패했습니다."

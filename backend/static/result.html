@@ -56,7 +56,7 @@
     const bg = score >= 70 ? "#fef2f2" : score >= 50 ? "#fffbeb" : "#f0fdf4";
     const fg = score >= 70 ? "#dc2626" : score >= 50 ? "#d97706" : "#16a34a";
     return `<span class="text-[11px] font-bold px-2 py-1 rounded-full shrink-0"
-      style="background:${bg}; color:${fg};">수혜 점수 ${score} · ${label}</span>`;
+      style="background:${bg}; color:${fg};">동조 점수 ${score} · ${label}</span>`;
   }
   function trendIcon(label) {
     if (label === "상승") return "📈";
@@ -111,8 +111,8 @@
       </div>
 
       <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-4">
-        <h2 class="font-bold text-slate-800 mb-1">🚀 함께 오르는 종목 (수혜주)</h2>
-        <p class="text-xs text-slate-400 mb-3">최근 6개월간 ${stock.name} 상승일의 동반 상승 이력을 분석한 결과입니다</p>
+        <h2 class="font-bold text-slate-800 mb-1">🚀 함께 오른 종목 (동반 상승 통계)</h2>
+        <p class="text-xs text-slate-400 mb-3">최근 6개월간 ${stock.name} 상승일에 함께 오른 이력을 집계한 과거 통계 데이터입니다</p>
         ${
           combo.length === 0
             ? `<div class="text-sm text-slate-400">함께 움직이는 종목을 찾지 못했습니다 (가격 데이터 부족 또는 양의 상관관계 없음).</div>`
@@ -154,7 +154,10 @@
         <p class="text-[11px] text-slate-400 mt-3 leading-relaxed">
           * 동반 상승 확률: ${stock.name} 상승일 중 해당 종목도 함께 오른 날의 비율 ·
           상승 민감도: 그런 날 ${stock.name} 상승분 대비 해당 종목의 평균 상승 폭 ·
-          수혜 점수: 두 지표와 상관계수를 합성한 0~100점 지표
+          동조 점수: 두 지표와 상관계수를 합성한 0~100점 지표
+        </p>
+        <p class="text-[11px] text-slate-400 mt-2 leading-relaxed">
+          ※ 위 수치는 과거 주가의 동반 상승 이력을 집계한 통계 데이터이며, 특정 종목의 매수·매도를 권유하는 투자 자문이 아닙니다.
         </p>
       </div>
 

@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS checkout_sessions (
     code TEXT NOT NULL,
     status TEXT NOT NULL,
     is_mock INTEGER NOT NULL DEFAULT 0,
+    tid TEXT,
     created_at TEXT NOT NULL
 );
 
@@ -50,6 +51,11 @@ def init_db() -> None:
     conn = get_connection()
     try:
         conn.executescript(SCHEMA)
+        # 기존 배포 DB에 tid 컬럼이 없으면 추가 (이미 있으면 무시)
+        try:
+            conn.execute("ALTER TABLE checkout_sessions ADD COLUMN tid TEXT")
+        except sqlite3.OperationalError:
+            pass
         conn.commit()
     finally:
         conn.close()

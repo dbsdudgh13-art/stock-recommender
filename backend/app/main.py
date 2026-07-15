@@ -106,12 +106,14 @@ def create_checkout(code: str, request: Request):
     return payments.create_checkout_session(code, stock["name"], base_url)
 
 
-@app.get("/api/pay/return")
-def pay_return(code: str, order_no: str, payToken: str | None = Query(None)):
-    """토스페이 인증 완료 후 돌아오는 지점. 승인을 마무리하고 결과 페이지로 보낸다."""
-    payments.confirm_return(order_no, payToken)
+@app.get("/api/pay/kakao/approve")
+def pay_kakao_approve(code: str, order_id: str, pg_token: str = Query(...)):
+    """카카오페이 결제 완료 후 approval_url로 돌아오는 지점. 승인 후 결과 페이지로 보낸다."""
+    ok = payments.approve(order_id, pg_token)
+    if not ok:
+        return RedirectResponse(url=f"/static/pricing.html?code={code}")
     return RedirectResponse(
-        url=f"/static/result.html?code={code}&session_id={order_no}"
+        url=f"/static/result.html?code={code}&session_id={order_id}"
     )
 
 

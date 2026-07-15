@@ -167,7 +167,7 @@ async function showSimilar(code) {
         </div>
       </div>
       <button id="unlockBtn" class="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-sm">
-        🚀 수혜주 · 방향성 보기 · 1,000원
+        🚀 동반 상승 통계 · 업종 추이 보기 · 1,000원
       </button>
     </div>
     <div>
