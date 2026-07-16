@@ -83,6 +83,16 @@ def get_post(post_id: int):
         conn.close()
 
 
+def title_exists(title: str) -> bool:
+    conn = _conn()
+    try:
+        cur = conn.cursor()
+        cur.execute(f"SELECT 1 FROM posts WHERE title = {_PH} LIMIT 1", (title,))
+        return cur.fetchone() is not None
+    finally:
+        conn.close()
+
+
 def count_posts() -> int:
     conn = _conn()
     try:

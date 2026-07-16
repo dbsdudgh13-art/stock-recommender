@@ -188,6 +188,8 @@ def admin_create_post(body: AdminPostCreate):
 def admin_generate_post():
     """서버가 직접 오늘의 시황을 생성·저장. 외부 크론이 매일 호출 → 컴퓨터 없이 자동 게시."""
     title, body = market_summary.generate()
+    if posts_store.title_exists(title):  # 같은 날 중복 방지 (테스트/재실행 대비)
+        return {"skipped": "already exists", "title": title}
     return {"id": posts_store.create_post(title, body), "title": title}
 
 
