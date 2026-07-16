@@ -167,7 +167,7 @@ async function showSimilar(code) {
         </div>
       </div>
       <button id="unlockBtn" class="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-sm">
-        🚀 동반 상승 통계 · 업종 추이 보기 · 1,000원
+        🚀 동반 상승 통계 · 업종 추이 보기
       </button>
     </div>
     <div>
@@ -182,8 +182,7 @@ async function showSimilar(code) {
   similarPanelEl.appendChild(wrap);
 
   document.getElementById("unlockBtn").addEventListener("click", () => {
-    const q = new URLSearchParams({ code: stock.code, name: stock.name });
-    window.location.href = `/static/pricing.html?${q.toString()}`;
+    window.location.href = `/static/result.html?code=${stock.code}`;
   });
   similarPanelEl.scrollIntoView({ behavior: "smooth", block: "start" });
 }

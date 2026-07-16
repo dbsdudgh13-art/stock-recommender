@@ -2,19 +2,17 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
-from fastapi.responses import RedirectResponse
+from fastapi import Depends, FastAPI, Header, HTTPException, Query
+from fastapi.responses import PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from .data_loader import load_stock_universe
 from .database import get_connection, init_db
-from . import payments, recommender
+from . import recommender
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "").strip()
-# 배포 환경에서는 프록시 뒤라 request.base_url이 http로 잡힐 수 있어 명시 설정을 우선한다
-PUBLIC_BASE_URL = os.environ.get("PUBLIC_BASE_URL", "").strip().rstrip("/")
 
 app = FastAPI(title="종목 유사/조합 추천 MVP")
 
@@ -36,9 +34,19 @@ def _startup() -> None:
     load_stock_universe()
 
 
+ADSENSE_PUB_ID = os.environ.get("ADSENSE_PUB_ID", "").strip()  # 예: pub-1234567890123456
+
+
 @app.get("/")
 def root():
     return RedirectResponse(url="/static/index.html")
+
+
+@app.get("/ads.txt", response_class=PlainTextResponse)
+def ads_txt():
+    if not ADSENSE_PUB_ID:
+        raise HTTPException(status_code=404, detail="not configured")
+    return f"google.com, {ADSENSE_PUB_ID}, DIRECT, f08c47fec0942fa0\n"
 
 
 @app.get("/api/industries")
@@ -97,36 +105,8 @@ def similar_stocks(code: str):
     return {"stock": stock, "similar": peers}
 
 
-@app.post("/api/checkout/{code}")
-def create_checkout(code: str, request: Request):
-    stock = recommender.get_stock(code)
-    if not stock:
-        raise HTTPException(status_code=404, detail="존재하지 않는 종목 코드입니다.")
-    base_url = PUBLIC_BASE_URL or str(request.base_url).rstrip("/")
-    return payments.create_checkout_session(code, stock["name"], base_url)
-
-
-@app.get("/api/pay/kakao/approve")
-def pay_kakao_approve(code: str, order_id: str, pg_token: str = Query(...)):
-    """카카오페이 결제 완료 후 approval_url로 돌아오는 지점. 승인 후 결과 페이지로 보낸다."""
-    ok = payments.approve(order_id, pg_token)
-    if not ok:
-        return RedirectResponse(url=f"/static/pricing.html?code={code}")
-    return RedirectResponse(
-        url=f"/static/result.html?code={code}&session_id={order_id}"
-    )
-
-
-# 판매 상품 확인용 무료 샘플 종목 (이용권 안내 페이지의 '샘플 미리보기'에서 사용)
-SAMPLE_CODE = "005930"
-
-
 @app.get("/api/combo/{code}")
-def combo(code: str, session_id: str = Query(...)):
-    is_sample = session_id == "sample" and code == SAMPLE_CODE
-    if not is_sample and not payments.is_session_paid(session_id, code):
-        raise HTTPException(status_code=402, detail="결제가 완료되지 않았습니다.")
-
+def combo(code: str):
     stock, candidates = recommender.find_combo_candidates(code)
     if not stock:
         raise HTTPException(status_code=404, detail="존재하지 않는 종목 코드입니다.")

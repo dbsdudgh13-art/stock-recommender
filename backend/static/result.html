@@ -72,15 +72,10 @@
 
   const params = new URLSearchParams(window.location.search);
   const code = params.get("code");
-  const sessionId = params.get("session_id");
   const content = document.getElementById("content");
 
   async function load() {
-    const res = await fetch(`/api/combo/${code}?session_id=${encodeURIComponent(sessionId)}`);
-    if (res.status === 402) {
-      content.innerHTML = `<div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 text-sm text-red-500">결제가 확인되지 않았습니다. 검색 페이지에서 다시 시도해 주세요.</div>`;
-      return;
-    }
+    const res = await fetch(`/api/combo/${code}`);
     if (!res.ok) {
       content.innerHTML = `<div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 text-sm text-red-500">결과를 불러오지 못했습니다.</div>`;
       return;
@@ -93,15 +88,7 @@
     const { stock, combo, direction } = data;
     const shortLabel = trendLabelOf(direction.short_term_change_pct);
 
-    const sampleBanner = sessionId === "sample"
-      ? `<div class="bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-medium rounded-xl p-3 mb-4">
-          👀 삼성전자 종목으로 제공되는 <strong>무료 샘플 미리보기</strong>입니다. 다른 종목의 분석은
-          <a href="/static/pricing.html" class="underline font-semibold">이용권 안내</a>를 참고해 주세요.
-        </div>`
-      : "";
-
     content.innerHTML = `
-      ${sampleBanner}
       <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-4 flex items-center gap-4">
         ${avatarHtml(stock.name, stock.code)}
         <div class="flex-1 min-w-0">
