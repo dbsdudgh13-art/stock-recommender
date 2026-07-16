@@ -1,4 +1,6 @@
 """업종 매칭 + 상관계수 기반 규칙 기반 추천 로직 (LLM 미사용)."""
+import random
+
 import pandas as pd
 
 from .data_loader import get_price_history
@@ -7,6 +9,7 @@ from .database import get_connection
 SIMILAR_LIMIT = 3
 COMBO_CANDIDATE_POOL = 15
 COMBO_RESULT_LIMIT = 2
+COMBO_VARIETY_POOL = 6  # 상위 N개 중 매번 랜덤 2개 → 같은 종목 반복 조회 시 결과 다양화
 MOMENTUM_SHORT_DAYS = 20
 MOMENTUM_LONG_DAYS = 60
 TREND_FLAT_THRESHOLD = 2.0  # % 등락률이 이 범위 안이면 횡보로 판단
@@ -125,7 +128,11 @@ def find_combo_candidates(code: str):
         results.append({**peer, **metrics})
 
     results.sort(key=lambda r: r["score"], reverse=True)
-    return stock, results[:COMBO_RESULT_LIMIT]
+    # 상위 풀에서 매번 랜덤 추출 → 같은 종목 반복 조회해도 결과가 바뀜 (여전히 고동조 종목만)
+    pool = results[:COMBO_VARIETY_POOL]
+    picked = random.sample(pool, min(COMBO_RESULT_LIMIT, len(pool)))
+    picked.sort(key=lambda r: r["score"], reverse=True)
+    return stock, picked
 
 
 def industry_direction(industry: str, sample_codes: list[str]):

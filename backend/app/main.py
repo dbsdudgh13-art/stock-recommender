@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from .data_loader import load_stock_universe
 from .database import get_connection, init_db
-from . import posts_store, recommender
+from . import market_summary, posts_store, recommender
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "").strip()
@@ -165,6 +165,13 @@ class AdminPostCreate(BaseModel):
 @app.post("/admin/posts", dependencies=[Depends(require_admin)])
 def admin_create_post(body: AdminPostCreate):
     return {"id": posts_store.create_post(body.title, body.body)}
+
+
+@app.post("/admin/generate-post", dependencies=[Depends(require_admin)])
+def admin_generate_post():
+    """서버가 직접 오늘의 시황을 생성·저장. 외부 크론이 매일 호출 → 컴퓨터 없이 자동 게시."""
+    title, body = market_summary.generate()
+    return {"id": posts_store.create_post(title, body), "title": title}
 
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR, html=True), name="static")
