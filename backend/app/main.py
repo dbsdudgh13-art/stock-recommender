@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Query
+from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException, Query
 from fastapi.responses import PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -135,9 +135,10 @@ def get_post(post_id: int):
 
 
 @app.post("/admin/refresh-data", dependencies=[Depends(require_admin)])
-def admin_refresh_data():
-    count = load_stock_universe(force=True)
-    return {"status": "ok", "stocks_loaded": count, "refreshed_at": datetime.utcnow().isoformat()}
+def admin_refresh_data(background: BackgroundTasks):
+    # 전 종목 재적재는 수십 초 걸릴 수 있어 백그라운드로 → 외부 크론 타임아웃 방지
+    background.add_task(load_stock_universe, force=True)
+    return {"status": "started"}
 
 
 @app.get("/admin/health", dependencies=[Depends(require_admin)])
