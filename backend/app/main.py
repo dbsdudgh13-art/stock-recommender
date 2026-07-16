@@ -36,6 +36,7 @@ def _startup() -> None:
 
 
 ADSENSE_PUB_ID = os.environ.get("ADSENSE_PUB_ID", "").strip()  # 예: pub-1234567890123456
+SITE_URL = os.environ.get("SITE_URL", "https://stock-recommender-0swa.onrender.com").rstrip("/")
 
 
 @app.get("/")
@@ -48,6 +49,20 @@ def ads_txt():
     if not ADSENSE_PUB_ID:
         raise HTTPException(status_code=404, detail="not configured")
     return f"google.com, {ADSENSE_PUB_ID}, DIRECT, f08c47fec0942fa0\n"
+
+
+@app.get("/robots.txt", response_class=PlainTextResponse)
+def robots_txt():
+    return f"User-agent: *\nAllow: /\nSitemap: {SITE_URL}/sitemap.xml\n"
+
+
+@app.get("/sitemap.xml", response_class=PlainTextResponse)
+def sitemap_xml():
+    pages = ["/static/index.html", "/static/blog.html", "/static/about.html",
+             "/static/privacy.html", "/static/terms.html"]
+    urls = "".join(f"<url><loc>{SITE_URL}{p}</loc></url>" for p in pages)
+    xml = f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>'
+    return PlainTextResponse(xml, media_type="application/xml")
 
 
 @app.get("/api/industries")
