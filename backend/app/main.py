@@ -3,7 +3,7 @@ from datetime import datetime
 from pathlib import Path
 
 from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException, Query
-from fastapi.responses import PlainTextResponse, RedirectResponse
+from fastapi.responses import FileResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -41,7 +41,8 @@ SITE_URL = os.environ.get("SITE_URL", "https://stock-recommender-0swa.onrender.c
 
 @app.get("/")
 def root():
-    return RedirectResponse(url="/static/index.html")
+    # 리다이렉트 대신 index.html 직접 반환 → 루트 URL에서 google-site-verification/OG 태그 노출
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 @app.get("/ads.txt", response_class=PlainTextResponse)
