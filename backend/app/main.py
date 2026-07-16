@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from .data_loader import load_stock_universe
 from .database import get_connection, init_db
-from . import recommender
+from . import posts_store, recommender
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "").strip()
@@ -31,6 +31,7 @@ def require_admin(x_admin_token: str = Header(default="")) -> None:
 @app.on_event("startup")
 def _startup() -> None:
     init_db()
+    posts_store.init()
     load_stock_universe()
 
 
@@ -119,26 +120,15 @@ def combo(code: str):
 
 @app.get("/api/posts")
 def list_posts(limit: int = Query(20, le=100)):
-    conn = get_connection()
-    try:
-        rows = conn.execute(
-            "SELECT id, title, created_at FROM posts ORDER BY id DESC LIMIT ?", (limit,)
-        ).fetchall()
-        return [dict(r) for r in rows]
-    finally:
-        conn.close()
+    return posts_store.list_posts(limit)
 
 
 @app.get("/api/posts/{post_id}")
 def get_post(post_id: int):
-    conn = get_connection()
-    try:
-        row = conn.execute("SELECT * FROM posts WHERE id = ?", (post_id,)).fetchone()
-        if not row:
-            raise HTTPException(status_code=404, detail="존재하지 않는 글입니다.")
-        return dict(row)
-    finally:
-        conn.close()
+    post = posts_store.get_post(post_id)
+    if not post:
+        raise HTTPException(status_code=404, detail="존재하지 않는 글입니다.")
+    return post
 
 
 # ── 아래는 예약 작업(데이터 갱신/장애감시/SEO 콘텐츠 에이전트)이 호출하는 관리자 전용 엔드포인트 ──
@@ -156,12 +146,11 @@ def admin_health():
     try:
         stock_count = conn.execute("SELECT COUNT(*) AS c FROM stocks").fetchone()["c"]
         last_updated = conn.execute("SELECT MAX(updated_at) AS t FROM stocks").fetchone()["t"]
-        post_count = conn.execute("SELECT COUNT(*) AS c FROM posts").fetchone()["c"]
         return {
             "status": "ok",
             "stock_count": stock_count,
             "stocks_last_updated": last_updated,
-            "post_count": post_count,
+            "post_count": posts_store.count_posts(),
             "checked_at": datetime.utcnow().isoformat(),
         }
     finally:
@@ -175,16 +164,7 @@ class AdminPostCreate(BaseModel):
 
 @app.post("/admin/posts", dependencies=[Depends(require_admin)])
 def admin_create_post(body: AdminPostCreate):
-    conn = get_connection()
-    try:
-        cur = conn.execute(
-            "INSERT INTO posts (title, body, created_at) VALUES (?, ?, ?)",
-            (body.title, body.body, datetime.utcnow().isoformat()),
-        )
-        conn.commit()
-        return {"id": cur.lastrowid}
-    finally:
-        conn.close()
+    return {"id": posts_store.create_post(body.title, body.body)}
 
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR, html=True), name="static")

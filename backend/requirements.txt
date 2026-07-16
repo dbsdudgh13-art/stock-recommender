@@ -4,3 +4,4 @@ finance-datareader==0.9.202
 pandas==3.0.3
 requests==2.32.3
 python-dotenv==1.0.1
+pg8000==1.31.2
