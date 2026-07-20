@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from .data_loader import load_stock_universe
+from .data_loader import load_stock_universe, load_us_universe
 from .database import get_connection, init_db
 from . import market_summary, posts_store, recommender
 
@@ -33,6 +33,7 @@ def _startup() -> None:
     init_db()
     posts_store.init()
     load_stock_universe()
+    load_us_universe()
 
 
 ADSENSE_PUB_ID = os.environ.get("ADSENSE_PUB_ID", "").strip()  # 예: pub-1234567890123456

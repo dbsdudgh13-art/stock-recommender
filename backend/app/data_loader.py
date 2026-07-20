@@ -54,6 +54,33 @@ def load_stock_universe(force: bool = False) -> int:
         conn.close()
 
 
+def load_us_universe() -> int:
+    """미국 S&P500 종목(종목명·업종)을 적재. 시세·시총은 무료 소스에 일괄 데이터가 없어 NULL.
+    가격은 종목 조회 시 개별로 받아온다(get_price_history). 매 부팅마다 upsert(503개, 가벼움)."""
+    conn = get_connection()
+    try:
+        df = fdr.StockListing("S&P500")[["Symbol", "Name", "Industry"]]
+        df["Industry"] = df["Industry"].fillna("기타")
+        now = datetime.utcnow().isoformat()
+        rows = [
+            (r["Symbol"], r["Name"], "S&P500", r["Industry"], None, None, None, now)
+            for _, r in df.iterrows()
+        ]
+        conn.executemany(
+            """
+            INSERT INTO stocks (code, name, market, industry, close_price, change_rate, market_cap, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(code) DO UPDATE SET
+                name=excluded.name, market=excluded.market, industry=excluded.industry, updated_at=excluded.updated_at
+            """,
+            rows,
+        )
+        conn.commit()
+        return len(rows)
+    finally:
+        conn.close()
+
+
 def get_price_history(code: str) -> pd.Series:
     """종목의 최근 N일 종가를 반환. 캐시가 오래되면 FDR에서 다시 받아온다."""
     conn = get_connection()
