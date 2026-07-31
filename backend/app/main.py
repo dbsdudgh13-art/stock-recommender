@@ -60,8 +60,8 @@ def robots_txt():
 
 @app.get("/sitemap.xml", response_class=PlainTextResponse)
 def sitemap_xml():
-    pages = ["/static/index.html", "/static/blog.html", "/static/about.html",
-             "/static/privacy.html", "/static/terms.html"]
+    pages = ["/static/index.html", "/static/blog.html", "/static/guide.html",
+             "/static/about.html", "/static/privacy.html", "/static/terms.html"]
     urls = "".join(f"<url><loc>{SITE_URL}{p}</loc></url>" for p in pages)
     xml = f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>'
     return PlainTextResponse(xml, media_type="application/xml")
