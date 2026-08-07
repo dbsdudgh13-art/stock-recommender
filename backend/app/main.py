@@ -3,13 +3,13 @@ from datetime import datetime
 from pathlib import Path
 
 from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException, Query
-from fastapi.responses import FileResponse, PlainTextResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from .data_loader import load_stock_universe, load_us_universe
 from .database import get_connection, init_db
-from . import market_summary, posts_store, recommender
+from . import market_summary, pages, posts_store, recommender
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "").strip()
@@ -60,11 +60,51 @@ def robots_txt():
 
 @app.get("/sitemap.xml", response_class=PlainTextResponse)
 def sitemap_xml():
-    pages = ["/static/index.html", "/static/blog.html", "/static/guide.html",
-             "/static/about.html", "/static/privacy.html", "/static/terms.html"]
-    urls = "".join(f"<url><loc>{SITE_URL}{p}</loc></url>" for p in pages)
+    static_paths = ["/", "/blog", "/static/guide.html",
+                    "/static/about.html", "/static/privacy.html", "/static/terms.html"]
+    urls = "".join(f"<url><loc>{SITE_URL}{p}</loc></url>" for p in static_paths)
+    # 시황 글 전부 포함 — 크롤러가 개별 글 URL을 알 수 있어야 색인된다
+    for p in posts_store.list_posts(1000):
+        urls += (
+            f"<url><loc>{SITE_URL}/post/{p['id']}</loc>"
+            f"<lastmod>{p['created_at'][:10]}</lastmod></url>"
+        )
     xml = f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>'
     return PlainTextResponse(xml, media_type="application/xml")
+
+
+@app.get("/static/blog.html")
+def blog_legacy():
+    return RedirectResponse(url="/blog", status_code=301)
+
+
+@app.get("/static/blog-post.html")
+def blog_post_legacy(id: int | None = None):
+    return RedirectResponse(url=f"/post/{id}" if id else "/blog", status_code=301)
+
+
+@app.get("/blog", response_class=HTMLResponse)
+def blog_page():
+    """서버 렌더 블로그 목록 (크롤러가 제목·링크를 HTML에서 바로 읽음)."""
+    return HTMLResponse(pages.render_blog_list(posts_store.list_posts(100)))
+
+
+@app.get("/post/{post_id}", response_class=HTMLResponse)
+def post_page(post_id: int):
+    """서버 렌더 글 상세 (본문이 HTML에 포함되어야 검색 색인됨)."""
+    post = posts_store.get_post(post_id)
+    if not post:
+        raise HTTPException(status_code=404, detail="존재하지 않는 글입니다.")
+    all_posts = posts_store.list_posts(1000)
+    ids = [p["id"] for p in all_posts]  # 최신순
+    prev_post = next_post = None
+    if post_id in ids:
+        i = ids.index(post_id)
+        if i + 1 < len(ids):  # 더 오래된 글
+            prev_post = all_posts[i + 1]
+        if i > 0:  # 더 최신 글
+            next_post = all_posts[i - 1]
+    return HTMLResponse(pages.render_post(post, prev_post, next_post))
 
 
 @app.get("/api/industries")
