@@ -1,5 +1,7 @@
 """업종 매칭 + 상관계수 기반 규칙 기반 추천 로직 (LLM 미사용)."""
+import json
 import random
+from datetime import datetime, timedelta
 
 import pandas as pd
 
@@ -10,6 +12,8 @@ SIMILAR_LIMIT = 3
 COMBO_CANDIDATE_POOL = 15
 COMBO_RESULT_LIMIT = 2
 COMBO_VARIETY_POOL = 6  # 상위 N개 중 매번 랜덤 2개 → 같은 종목 반복 조회 시 결과 다양화
+COMBO_CACHE_STALE_HOURS = 30  # 매일 크론이 갱신 → 하루치보다 조금 여유
+PRECOMPUTE_LIMIT = 500  # 시총 상위 N개만 미리 계산. 크론 소요시간 보고 올릴 것 (전 종목은 약 3,400개)
 MOMENTUM_SHORT_DAYS = 20
 MOMENTUM_LONG_DAYS = 60
 TREND_FLAT_THRESHOLD = 2.0  # % 등락률이 이 범위 안이면 횡보로 판단
@@ -51,14 +55,30 @@ def _daily_returns(code: str) -> pd.Series:
     return prices.pct_change().dropna()
 
 
-def _subject_particle(word: str) -> str:
-    """받침 유무에 따라 이/가 조사를 고른다 (한글이 아니면 '이(가)')."""
+def _has_final_consonant(word: str) -> bool | None:
+    """마지막 글자에 받침이 있는지. 한글이 아니면 None."""
     if not word:
-        return "이(가)"
+        return None
     last = word[-1]
     if "가" <= last <= "힣":
-        return "이" if (ord(last) - ord("가")) % 28 else "가"
-    return "이(가)"
+        return bool((ord(last) - ord("가")) % 28)
+    return None
+
+
+def subject_particle(word: str) -> str:
+    """받침 유무에 따라 이/가 조사를 고른다 (한글이 아니면 '이(가)')."""
+    final = _has_final_consonant(word)
+    if final is None:
+        return "이(가)"
+    return "이" if final else "가"
+
+
+def with_particle(word: str) -> str:
+    """받침 유무에 따라 과/와 조사를 고른다."""
+    final = _has_final_consonant(word)
+    if final is None:
+        return "와(과)"
+    return "과" if final else "와"
 
 
 def _analyze_pair(target_name: str, joined: pd.DataFrame) -> dict | None:
@@ -90,7 +110,7 @@ def _analyze_pair(target_name: str, joined: pd.DataFrame) -> dict | None:
     )
 
     reason = (
-        f"{target_name}{_subject_particle(target_name)} 오른 날의 {hit_rate * 100:.0f}%에서 함께 상승했고, "
+        f"{target_name}{subject_particle(target_name)} 오른 날의 {hit_rate * 100:.0f}%에서 함께 상승했고, "
         f"그런 날 평균적으로 {target_name} 상승분의 {upside_capture * 100:.0f}% 수준으로 올랐습니다."
     )
 
@@ -103,23 +123,16 @@ def _analyze_pair(target_name: str, joined: pd.DataFrame) -> dict | None:
     }
 
 
-def find_combo_candidates(code: str):
-    """같은 업종 내에서 타깃 상승일에 함께 오르는 경향(수혜 관계)이 강한 종목을 찾는다."""
-    stock, peers = find_similar(code, limit=COMBO_CANDIDATE_POOL)
-    if not stock:
-        return None, []
-
-    # 대상 + 후보 전 종목 가격을 먼저 병렬로 받아둔다 (아래 루프는 전부 캐시 히트가 된다)
-    prefetch_price_histories([code] + [p["code"] for p in peers])
-
-    target_returns = _daily_returns(code)
-    if target_returns.empty:
-        return stock, []
+def _rank_peers(stock: dict, peers: list[dict], returns: dict[str, pd.Series]) -> list[dict]:
+    """미리 받아둔 수익률 시계열로 동조 점수 상위 후보를 뽑는다 (네트워크·DB 접근 없음)."""
+    target_returns = returns.get(stock["code"])
+    if target_returns is None or target_returns.empty:
+        return []
 
     results = []
     for peer in peers:
-        peer_returns = _daily_returns(peer["code"])
-        if peer_returns.empty:
+        peer_returns = returns.get(peer["code"])
+        if peer_returns is None or peer_returns.empty:
             continue
         joined = pd.concat([target_returns, peer_returns], axis=1, join="inner")
         joined.columns = ["target", "peer"]
@@ -131,11 +144,118 @@ def find_combo_candidates(code: str):
         results.append({**peer, **metrics})
 
     results.sort(key=lambda r: r["score"], reverse=True)
+    return results[:COMBO_VARIETY_POOL]
+
+
+def get_cached_ranking(code: str) -> list[dict] | None:
+    """저장된 동조 분석 결과. 없거나 오래됐으면 None."""
+    conn = get_connection()
+    try:
+        row = conn.execute(
+            "SELECT computed_at, payload FROM combo_cache WHERE code = ?", (code,)
+        ).fetchone()
+    finally:
+        conn.close()
+    if not row:
+        return None
+    age = datetime.utcnow() - datetime.fromisoformat(row["computed_at"])
+    if age > timedelta(hours=COMBO_CACHE_STALE_HOURS):
+        return None
+    return json.loads(row["payload"])
+
+
+def _save_ranking(code: str, ranked: list[dict]) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "INSERT OR REPLACE INTO combo_cache (code, computed_at, payload) VALUES (?, ?, ?)",
+            (code, datetime.utcnow().isoformat(), json.dumps(ranked, ensure_ascii=False)),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def compute_ranking(code: str) -> tuple[dict | None, list[dict]]:
+    """동조 분석을 실제로 수행하고 결과를 저장한다 (캐시 미스 경로)."""
+    stock, peers = find_similar(code, limit=COMBO_CANDIDATE_POOL)
+    if not stock:
+        return None, []
+
+    codes = [code] + [p["code"] for p in peers]
+    # 대상 + 후보 가격을 먼저 병렬로 받아둔다 (순차로 받으면 왕복 지연이 그대로 쌓인다)
+    prefetch_price_histories(codes)
+    returns = {c: _daily_returns(c) for c in codes}
+
+    ranked = _rank_peers(stock, peers, returns)
+    _save_ranking(code, ranked)
+    return stock, ranked
+
+
+def find_combo_candidates(code: str):
+    """같은 업종 내에서 타깃 상승일에 함께 오르는 경향(수혜 관계)이 강한 종목을 찾는다."""
+    ranked = get_cached_ranking(code)
+    if ranked is None:
+        stock, ranked = compute_ranking(code)
+        if not stock:
+            return None, []
+    else:
+        stock = get_stock(code)
+        if not stock:
+            return None, []
+
     # 상위 풀에서 매번 랜덤 추출 → 같은 종목 반복 조회해도 결과가 바뀜 (여전히 고동조 종목만)
-    pool = results[:COMBO_VARIETY_POOL]
-    picked = random.sample(pool, min(COMBO_RESULT_LIMIT, len(pool)))
+    picked = random.sample(ranked, min(COMBO_RESULT_LIMIT, len(ranked)))
     picked.sort(key=lambda r: r["score"], reverse=True)
     return stock, picked
+
+
+def precompute_combos(limit: int = PRECOMPUTE_LIMIT) -> int:
+    """시총 상위 종목의 동조 분석을 미리 계산해 저장한다 (매일 크론이 호출).
+
+    업종 단위로 묶어 처리한다 — 같은 업종 종목들은 후보 풀이 같아서 가격을 한 번만 받으면 된다.
+    """
+    conn = get_connection()
+    try:
+        targets = [
+            dict(r)
+            for r in conn.execute(
+                "SELECT * FROM stocks WHERE market_cap IS NOT NULL "
+                "ORDER BY market_cap DESC LIMIT ?",
+                (limit,),
+            ).fetchall()
+        ]
+    finally:
+        conn.close()
+
+    by_industry: dict[str, list[dict]] = {}
+    for t in targets:
+        by_industry.setdefault(t["industry"], []).append(t)
+
+    done = 0
+    for industry, members in by_industry.items():
+        conn = get_connection()
+        try:
+            pool = [
+                dict(r)
+                for r in conn.execute(
+                    "SELECT * FROM stocks WHERE industry = ? "
+                    "ORDER BY market_cap IS NULL, market_cap DESC LIMIT ?",
+                    (industry, COMBO_CANDIDATE_POOL + 1),
+                ).fetchall()
+            ]
+        finally:
+            conn.close()
+
+        codes = {p["code"] for p in pool} | {m["code"] for m in members}
+        prefetch_price_histories(list(codes))
+        returns = {c: _daily_returns(c) for c in codes}
+
+        for target in members:
+            peers = [p for p in pool if p["code"] != target["code"]][:COMBO_CANDIDATE_POOL]
+            _save_ranking(target["code"], _rank_peers(target, peers, returns))
+            done += 1
+    return done
 
 
 def industry_direction(industry: str, sample_codes: list[str]):

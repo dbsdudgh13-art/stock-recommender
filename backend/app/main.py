@@ -1,4 +1,5 @@
 import os
+import threading
 from datetime import datetime
 from pathlib import Path
 
@@ -153,7 +154,9 @@ def stock_page(code: str):
         }
     finally:
         conn.close()
-    return HTMLResponse(pages.render_stock(stock, peers, stats))
+    # 미리 계산된 것만 쓴다 — 여기서 직접 계산하면 크롤러가 수천 페이지 훑을 때 죽는다
+    combo = recommender.get_cached_ranking(code)
+    return HTMLResponse(pages.render_stock(stock, peers, stats, combo))
 
 
 @app.get("/api/industries")
@@ -240,10 +243,25 @@ def get_post(post_id: int):
 # ── 아래는 예약 작업(데이터 갱신/장애감시/SEO 콘텐츠 에이전트)이 호출하는 관리자 전용 엔드포인트 ──
 
 
+_refresh_lock = threading.Lock()
+
+
+def _refresh_all() -> None:
+    # 크론이 17:30·17:50 두 번 호출한다 (재시도용). 앞 작업이 아직 돌면 건너뛴다
+    if not _refresh_lock.acquire(blocking=False):
+        return
+    try:
+        load_stock_universe(force=True)
+        # 동조 분석 사전 계산 — 종목 페이지에 실을 문장이 여기서 만들어지고, 조회 응답도 즉시가 된다
+        recommender.precompute_combos()
+    finally:
+        _refresh_lock.release()
+
+
 @app.post("/admin/refresh-data", dependencies=[Depends(require_admin)])
 def admin_refresh_data(background: BackgroundTasks):
-    # 전 종목 재적재는 수십 초 걸릴 수 있어 백그라운드로 → 외부 크론 타임아웃 방지
-    background.add_task(load_stock_universe, force=True)
+    # 전 종목 재적재 + 사전 계산은 수 분 걸려 백그라운드로 → 외부 크론 타임아웃 방지
+    background.add_task(_refresh_all)
     return {"status": "started"}
 
 

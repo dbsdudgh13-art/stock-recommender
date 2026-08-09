@@ -22,6 +22,13 @@ CREATE TABLE IF NOT EXISTS price_history (
     PRIMARY KEY (code, date)
 );
 
+-- 동조 분석 결과(상위 후보 JSON). 매일 크론이 미리 채워두고, 없으면 조회 시 계산해 채운다.
+CREATE TABLE IF NOT EXISTS combo_cache (
+    code TEXT PRIMARY KEY,
+    computed_at TEXT NOT NULL,
+    payload TEXT NOT NULL
+);
+
 -- 마지막으로 외부에서 받아온 시각. price_history.date(거래일)로는 신선도를 알 수 없다
 -- (금요일 봉은 주말 내내 '오래된' 것으로 보여 매 요청마다 재다운로드됐다).
 CREATE TABLE IF NOT EXISTS price_fetch_log (

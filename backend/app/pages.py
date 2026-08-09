@@ -7,6 +7,8 @@ import html
 import os
 from datetime import datetime
 
+from .recommender import subject_particle, with_particle
+
 SITE_URL = os.environ.get("SITE_URL", "https://stock-recommender-0swa.onrender.com").rstrip("/")
 
 _HEAD = """<!doctype html>
@@ -104,16 +106,26 @@ def _fmt_change(rate: float | None) -> str:
     return f'<span class="{color} font-semibold">{rate:+.2f}%</span>'
 
 
-def render_stock(stock: dict, peers: list[dict], stats: dict) -> str:
+def render_stock(stock: dict, peers: list[dict], stats: dict, combo: list[dict] | None = None) -> str:
     """종목 상세 — 크롤러가 종목명·업종·유사 종목을 HTML에서 바로 읽는다."""
     name, code = stock["name"], stock["code"]
     industry = stock["industry"] or "기타"
     is_kr = stock["market"] != "S&P500"
+    combo = combo or []
 
-    desc = (
-        f"{name}({code})와 같은 업종 '{industry}' 종목 {stats['peer_count']}개를 시가총액 순으로 정리했습니다. "
-        f"과거 주가가 함께 오른 종목 통계(동조 분석)를 무료로 확인하세요."
-    )
+    ga, wa = subject_particle(name), with_particle(name)
+    if combo:
+        top = combo[0]
+        desc = (
+            f"{name}{ga} 오른 날 함께 오른 종목은 {top['name']}"
+            f"(동반 상승 확률 {top['hit_rate'] * 100:.0f}%, 동조 점수 {top['score']})입니다. "
+            f"{name}({code}){wa} 같은 업종 '{industry}' 종목 {stats['peer_count']}개의 동조 통계를 무료로 확인하세요."
+        )
+    else:
+        desc = (
+            f"{name}({code}){wa} 같은 업종 '{industry}' 종목 {stats['peer_count']}개를 시가총액 순으로 정리했습니다. "
+            f"과거 주가가 함께 오른 종목 통계(동조 분석)를 무료로 확인하세요."
+        )
     head = _HEAD.format(
         title=f"{_esc(name)}({_esc(code)}) 유사 종목 · 동조 분석 | 스톡메이트(StockMate)",
         og_title=f"{_esc(name)} 유사 종목 · 동조 분석",
@@ -159,6 +171,32 @@ def render_stock(stock: dict, peers: list[dict], stats: dict) -> str:
     else:
         industry_line = f"'{industry}' 업종에는 {stats['peer_count']}개 종목이 분류되어 있습니다."
 
+    if combo:
+        cards = "".join(
+            f"""
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 mt-3">
+          <div class="flex items-baseline gap-2">
+            <a href="/stock/{_esc(c['code'])}" class="font-bold text-slate-800 hover:underline">{_esc(c['name'])}</a>
+            <span class="text-xs text-slate-400">{_esc(c['code'])}</span>
+            <span class="ml-auto text-xs font-bold text-indigo-600">동조 점수 {c['score']}</span>
+          </div>
+          <p class="text-sm text-slate-600 mt-2 leading-relaxed">{_esc(c['reason'])}</p>
+          <div class="flex gap-4 text-xs text-slate-400 mt-3">
+            <span>동반 상승 확률 {c['hit_rate'] * 100:.0f}%</span>
+            <span>상관계수 {c['correlation']}</span>
+            <span>상승 민감도 {c['upside_capture'] * 100:.0f}%</span>
+          </div>
+        </div>"""
+            for c in combo[:3]
+        )
+        combo_block = f"""
+    <h2 class="text-lg font-bold text-slate-900 mt-8">{_esc(name)}{wa} 함께 오른 종목</h2>
+    <p class="text-sm text-slate-500 mt-1">최근 180거래일 동안 {_esc(name)}{ga} 상승한 날, 같은 업종에서 함께 오르는 경향이 가장 강했던 종목입니다.</p>
+    {cards}
+"""
+    else:
+        combo_block = ""
+
     body = f"""
     <a href="/" class="text-sm text-indigo-600 hover:underline">← 종목 검색</a>
     <h1 class="text-2xl font-extrabold text-slate-900 mt-3">{_esc(name)} <span class="text-slate-400 text-lg font-bold">{_esc(code)}</span></h1>
@@ -173,7 +211,8 @@ def render_stock(stock: dict, peers: list[dict], stats: dict) -> str:
       <p class="text-xs text-slate-400 mt-2 text-center">과거 180일 주가로 계산한 동반 상승 확률·상관계수·상승 민감도</p>
     </div>
 
-    <h2 class="text-lg font-bold text-slate-900 mt-8">{_esc(name)}와 같은 업종 종목</h2>
+    {combo_block}
+    <h2 class="text-lg font-bold text-slate-900 mt-8">{_esc(name)}{wa} 같은 업종 종목</h2>
     <p class="text-sm text-slate-500 mt-1">{_esc(industry_line)}</p>
     {peer_block}
 
