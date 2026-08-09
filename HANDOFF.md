@@ -1,115 +1,157 @@
-# 인수인계 자료 — 종목 유사/조합 추천 MVP
+# 인수인계 자료 — 스톡메이트(StockMate)
 
-작성일: 2026-07-10
+최종 갱신: 2026-08-07
 
-## 1. 프로젝트 개요
+## 1. 한 줄 요약
 
-국내(코스피/코스닥) 종목을 검색하면
-1. 같은 분야(업종) **유사 종목 3개**를 무료로 보여주고
-2. 결제(토스페이먼츠) 후에는 **상관계수가 높은 "함께 오르는 종목(수혜주)" 2개**와
-3. 해당 업종의 **방향성(등락률 기반 규칙형 요약)** 을 보여주는 웹앱.
+국내(코스피·코스닥)와 미국(S&P500) 종목을 검색하면 **같은 업종 유사 종목**과 **과거 주가가 함께 오른 종목 통계(동조 분석)**, **업종 추이**를 무료로 보여주는 사이트. 매일 저녁 시황 글이 자동 생성·게시된다. 수익 모델은 **구글 애드센스(예정)**.
 
-투자자문이 아니라는 면책 문구가 모든 결과에 포함됨. LLM은 사용하지 않고 전부 규칙/통계 기반.
+- **라이브 주소**: https://stock-recommender-0swa.onrender.com
+- **모든 기능 무료**. 결제 기능 없음(제거됨 — 아래 6번 참고).
+- **컴퓨터를 꺼도 사이트와 자동화가 계속 돌아간다.**
 
 ## 2. 현재 상태
 
-기능 전체가 동작하는 MVP 프로토타입 상태. 로컬에서 실행해 브라우저로 검색→유사종목→결제→수혜주/방향성까지 전 과정을 실제로 확인 완료.
+| 항목 | 상태 |
+|---|---|
+| 사이트 운영 | ✅ Render 배포, 24시간 |
+| 시황 자동 게시 | ✅ 매일 18:00 KST (외부 cron), 휴장일 자동 스킵 |
+| 데이터 자동 갱신 | ✅ 매일 17:30 KST (외부 cron) |
+| 장애 감시 | ✅ UptimeRobot 5분마다 (겸 Render 잠들기 방지) |
+| 글 영구 저장 | ✅ Neon Postgres |
+| SEO 서버 렌더링 | ✅ 블로그 2026-08-07, 종목 페이지 2026-08-09 |
+| 검색엔진 등록 | ✅ 구글·네이버 사이트맵 제출 완료, 색인 대기 중 |
+| 애드센스 | ⏳ 미신청 (콘텐츠 더 쌓고 신청 예정) |
+| 결제 | ❌ 제거됨 (PG 심사 반려로 무료 전환) |
 
-**미완료/제한된 부분**은 8번 항목 참고.
-
-## 3. 실행 방법
+## 3. 실행 방법 (로컬)
 
 ```bash
 cd backend
 venv/Scripts/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
-브라우저에서 http://127.0.0.1:8000 접속. 최초 실행 시 KRX 전 종목 목록(약 2,872개)을 자동으로 받아 `backend/data/app.db`(SQLite)에 캐싱함 (몇 초~수십 초 소요).
-
-`.claude/launch.json`에 `preview_start`용 설정이 등록되어 있어 Claude Code의 Browser 프리뷰 도구로도 바로 띄울 수 있음.
+`.claude/launch.json`에 등록돼 있어 Claude Code의 preview 도구로도 바로 실행 가능.
+최초 실행 시 KRX 전 종목(약 2,872개) + S&P500(503개)을 자동 적재한다.
 
 ## 4. 폴더 구조
 
 ```
 backend/
   app/
-    main.py          # FastAPI 라우터
-    database.py       # SQLite 스키마/연결
-    data_loader.py     # FinanceDataReader로 KRX 종목·가격 적재/캐싱
-    recommender.py     # 유사 종목·수혜주·방향성 로직 (규칙 기반)
-    payments.py        # 토스페이먼츠 결제위젯 연동
-  static/              # 프론트엔드 (순수 HTML/JS, 빌드 없음)
-    index.html          # 검색 + 가격/업종 필터
-    app.js              # 카드 렌더링, 검색, 유사종목 패널, 결제 시작
-    checkout.html        # 토스 결제위젯 페이지
-    toss-success.html     # 결제 승인 콜백 → 서버 confirm 호출
-    toss-fail.html         # 결제 실패 페이지
-    result.html            # 수혜주 + 방향성 결과 페이지
-  requirements.txt
-  data/app.db          # SQLite 캐시 (gitignore 대상, 삭제해도 재생성됨)
-README.md              # 실행법 + 데이터소스/로직 요약 (사용자 대상 짧은 버전)
+    main.py           # FastAPI 라우터 전체
+    database.py       # SQLite 스키마 (stocks, price_history)
+    posts_store.py    # 시황 글 저장소 (Postgres/SQLite 자동 전환)
+    data_loader.py    # KRX·S&P500 종목 적재, 가격 히스토리 캐싱
+    recommender.py    # 유사 종목·동조 분석·업종 추이 로직
+    market_summary.py # 시황 글 자동 생성 (규칙 기반)
+    pages.py          # 블로그 서버 렌더링 (SEO)
+  static/             # 프론트엔드 (빌드 없는 순수 HTML/JS + Tailwind CDN)
+    index.html        # 검색 화면
+    app.js            # 검색·카드·유사종목 로직
+    result.html       # 동조 통계 결과 화면
+    guide.html        # 지표 설명 (SEO용 콘텐츠)
+    about/privacy/terms.html
+GUIDE.md              # 배포·수익화 초보자용 안내서
+README.md             # 짧은 실행 안내
 ```
 
-## 5. 데이터 소스
+## 5. 핵심 로직
 
-- **가격/시가총액**: `FinanceDataReader.StockListing('KRX')`
-- **업종 분류**: `FinanceDataReader.StockListing('KRX-DESC')` (KSIC 업종, Code 기준 join)
-- 둘 다 무료·키 불필요. 한국투자증권 OpenAPI 등은 승인 절차가 있어 의도적으로 배제함.
-- 가격 히스토리(180일)는 종목별로 최초 조회 시점에 받아 SQLite `price_history`에 캐싱, 20시간 지나면 재조회.
+### 데이터 소스
+- `FinanceDataReader` — KRX 전 종목(시세·시총·업종), S&P500(종목명·업종)
+- **미국 종목은 가격·등락률이 없다** (무료 소스에 일괄 시세 데이터 없음). 동조 분석은 정상 작동.
+- ETF·리츠·선물 미지원 (개별 주식만)
 
-## 6. 핵심 로직 (recommender.py)
+### 동조 분석 (recommender.py)
+같은 업종 종목들과 최근 180일 일별 수익률을 비교해 계산:
+- **동반 상승 확률** — 검색 종목 상승일 중 함께 오른 날 비율
+- **상승 민감도** — 그런 날 상승폭 비율
+- **상관계수** — 피어슨 상관계수 (양수만 사용)
+- **동조 점수** = 확률 55% + 상관계수 30% + 민감도 15% (0~100점)
 
-- `SIMILAR_LIMIT = 3` — 무료로 보여주는 같은 업종 유사 종목 개수
-- `COMBO_CANDIDATE_POOL = 10` — 수혜주 계산 시 내부적으로 살펴보는 같은 업종 후보 풀
-- `COMBO_RESULT_LIMIT = 2` — 유료로 보여주는 수혜주 개수
-- **수혜주 로직**: 같은 업종 내 종목들과의 최근 180일 일별 수익률 피어슨 상관계수를 계산 → **양의 상관계수만 남기고 내림차순 정렬** → 상위 2개. (⚠️ 초기 버전은 반대로 "낮은 상관계수(분산 효과)" 기준이었으나, 사용자 요청으로 "같이 오르는 종목" 기준으로 완전히 뒤집었음)
-- **방향성 로직**: 업종 대표 종목들의 최근 20/60거래일 평균 등락률로 상승/횡보/하락 판정 (임계값 ±2%)
+상위 6개 후보 중 **매번 랜덤 2개**를 보여준다 (`COMBO_VARIETY_POOL`). 같은 종목을 다시 조회하면 다른 조합이 나오는 건 의도된 동작.
 
-## 7. 결제 (토스페이먼츠)
+### 시황 글 생성 (market_summary.py)
+KRX 스냅샷 하나로 아래를 계산해 약 1,500자 글을 만든다. **LLM·뉴스 미사용, 순수 통계.**
+- 코스피/코스닥별 상승·하락·보합 종목 수, 평균 등락률
+- **지수 기여도 분석** — 시총가중 vs 단순평균 괴리로 "지수를 끌어내린 종목" 특정
+- 업종별 강세·약세 TOP3, 상승 업종 비율(차별화 장세 판단)
+- 거래대금 상위, 자금 쏠림 비율
+- 시총 규모별 온도차, 급등락 종목 수
 
-- `POST /api/checkout/{code}` → 주문 생성, `TOSS_CLIENT_KEY`와 함께 결제위젯 페이지로 이동
-- `checkout.html`에서 토스 결제위젯 렌더링 → 신용카드/토스페이/카카오페이/페이코/네이버페이 모두 선택 가능 (토스 연동 하나로 전부 제공됨)
-- 결제 승인 후 `toss-success.html` → `POST /api/toss/confirm` → 토스 서버에 금액·주문번호 검증 → 세션 `paid` 처리 → `result.html`로 이동
-- **환경변수 미설정 시**: `TOSS_CLIENT_KEY`는 토스 공식 문서의 위젯 미리보기 전용 데모 키(`test_gck_docs_...`)로 자동 대체되어 화면은 뜨지만, **실제 결제 승인은 불가** (배너로 안내됨)
-- **실제 결제가 되게 하려면**: https://developers.tosspayments.com 무료 가입(사업자 등록 불필요) → 개발자센터에서 테스트 키 발급 → 환경변수 설정:
-  ```bash
-  export TOSS_CLIENT_KEY=test_ck_...
-  export TOSS_SECRET_KEY=test_sk_...
-  ```
-- 가격은 `COMBO_PRICE_KRW` 환경변수로 조정 가능 (기본 1,000원)
+문장은 슬롯마다 3가지 표현 중 **날짜 기반으로 선택**해 매일 다르게 나온다.
+**휴장일(주말·공휴일)에는 생성하지 않는다** — KRX 최신 거래일이 오늘인지 확인해 판단.
 
-## 8. 알려진 제한사항 / TODO
+## 6. 결제가 없는 이유 (중요)
 
-- 실시간 시세 아님 (일별 종가 기준)
-- git 저장소 아님 (버전관리 미시작 상태) — 필요 시 `git init` 권장
-- SQLite 단일 파일 캐시, 다중 서버/동시성 고려 안 됨
-- `checkout_sessions` 테이블의 `is_mock` 컬럼은 Stripe/모의결제 시절의 흔적으로 현재는 사용 안 함(항상 0) — 정리해도 무방
-- 실제 결제 확인까지 브라우저로 끝까지 완결 테스트는 안 함 (토스 시크릿 키가 없어 위젯 렌더링까지만 확인, 서버 confirm 로직은 코드 리뷰 + 에러 핸들링으로 검증)
-- Node.js는 설치돼 있지만 프론트엔드는 계속 순수 HTML/JS 유지 중 (이미 잘 동작해서 굳이 React/Vite로 안 바꿈 — 필요하면 요청하면 전환 가능)
+유료 판매를 시도했으나 **PG사 3회 반려** 후 무료로 전환:
+1. 토스페이먼츠 — 가입비 22만원 + 연 11만원 부담으로 포기
+2. 토스페이 1차 — "가오픈 상태" 반려 → 상품 페이지·샘플 만들어 재신청
+3. 토스페이 2차 — **"투자 추천 성격 서비스는 입점 제한"** (정책상 거절)
+4. 카카오페이 — 같은 사유로 반려
 
-## 9. 진행 히스토리 요약 (의사결정 이유)
+이후 표현을 "수혜주 추천" → "동반 상승 통계 데이터"로 전면 수정하고 결제 코드를 삭제했다.
+**다시 유료화하려면** 같은 정책 벽을 넘어야 한다. 결제 코드는 git 히스토리에 남아 있다.
 
-1. 그린필드 시작 → 데이터 소스/결제수단 등 사용자에게 질문 후 방향 확정
-2. Node.js 없어서 프론트엔드는 Vite/React 대신 Tailwind CDN + 순수 JS로 시작
-3. 결제는 처음엔 Stripe 테스트 모드(+모의결제 폴백)로 구현
-4. 사용자 피드백: 이미지를 더 풍부하게(아바타/뱃지/등락률 색상 등), 유사종목 3개로 제한 → 반영
-5. 사용자 피드백: 결제를 토스페이먼츠+카카오페이로 → Stripe/모의결제 완전히 걷어내고 토스 결제위젯으로 교체 (카카오페이는 토스 위젯 안에 자동 포함됨)
-6. 버그: 좁은 화면에서 가격/업종 뱃지 겹침, 조합 페이지에서 종목명 안 보임 → flex 레이아웃을 `ml-[Npx]` 같은 픽셀 오프셋 대신 `flex-1` 컬럼 중첩 구조로 재작성해 해결
-7. 사용자 피드백: 유사종목 버튼 클릭 시 자동 스크롤, 조합 기준을 "분산 효과(저상관)"에서 "동반 상승 수혜주(고상관)"로 반전 → 반영
-8. 조합 종목 개수 5개 → 2개로 고정
-9. 성장 단계 착수 (2026-07-10): 애드센스 수익화, AI 에이전트 자동관리, 홍보, 실결제 전환을 요청받아 다음을 추가:
-   - 법적 페이지 3종(`privacy.html`/`terms.html`/`about.html`, 애드센스 심사 필수 요건) + 홈/결과 페이지 하단 푸터 링크
-   - `ADMIN_TOKEN` 헤더로 보호되는 관리자 API 3종: `POST /admin/refresh-data`, `GET /admin/health`, `POST /admin/posts` — 예약된 AI 에이전트가 호출
-   - "오늘의 시황" 블로그 기능 (`posts` 테이블, `/api/posts`, `blog.html`/`blog-post.html`) — SEO 유입 + 애드센스 콘텐츠 요건 겸용
-   - `git init` + `.gitignore` 완료, 단 **git commit은 의도적으로 하지 않음** — git 전역 설정을 건드리지 않기 위해 사용자가 GitHub Desktop으로 최초 커밋/푸시하도록 [GUIDE.md](GUIDE.md)에 안내
-   - Claude Code 예약 작업(스케줄) 3종 생성 완료: `stock-data-refresh-agent`(평일 18:50), `stock-site-health-monitor`(매시 정각+7분), `stock-seo-content-agent`(평일 19:15). 현재는 URL/토큰이 플레이스홀더(`YOUR-SITE-DOMAIN.example.com`, `YOUR_ADMIN_TOKEN`) 상태라 실행 시 스스로 건너뛰고 1일 1회 알림만 보냄 — 배포 완료 후 실제 값으로 `update_scheduled_task` 필요 (GUIDE.md 7단계)
-   - [GUIDE.md](GUIDE.md) 신규 작성: GitHub Desktop → Render 배포 → 가비아 도메인 연결 → 홈택스 개인사업자등록 → 토스페이먼츠 라이브 키 전환 → 구글 애드센스 신청 → 예약 에이전트 활성화 → 홍보 방법까지 비개발자 기준 클릭 단위로 서술
+사업자등록도 폐업 완료 (부가세 폐업확정신고까지 끝). 사이트에 사업자 정보 표기 없음.
 
-## 10. 다음에 작업 이어받을 때 참고할 것
+## 7. 자동화 구성 (컴퓨터와 무관하게 동작)
 
-- 위 히스토리 때문에 코드에 "낮은 상관계수가 좋다"는 예전 논리/문구가 남아있으면 버그이니 확인할 것 (6번 항목 기준이 최종)
-- 프리뷰 브라우저 창 폭이 약 279px로 매우 좁게 렌더링되는 환경이므로, 카드형 UI를 수정할 때는 항상 이 폭에서 테스트할 것 (아바타+텍스트+버튼을 한 줄에 욱여넣으면 텍스트가 짓눌리는 버그가 반복 발생했음)
-- 결제 흐름을 실제로 끝까지 확인하려면 토스페이먼츠 테스트 키가 필요함 (7번 항목 참고)
-- `backend/static/about.html`의 `contact@example.com`은 실제 운영자 이메일로 교체 필요 (애드센스 심사 전 필수)
-- 예약된 3개 AI 에이전트(`stock-data-refresh-agent`, `stock-site-health-monitor`, `stock-seo-content-agent`, `C:\Users\user\.claude\scheduled-tasks\` 아래 SKILL.md로 저장됨)는 아직 플레이스홀더 URL/토큰 상태 — 배포 URL과 ADMIN_TOKEN이 정해지면 반드시 `update_scheduled_task`로 갱신해야 실제로 동작함
-- git 저장소는 초기화만 되어 있고 커밋은 없음 (git 전역 설정을 건드리지 않기 위해 의도적으로 커밋하지 않았음) — 사용자가 GitHub Desktop으로 첫 커밋/푸시를 해야 함 (GUIDE.md 1단계)
+| 작업 | 수단 | 시각 | 엔드포인트 |
+|---|---|---|---|
+| 시황 글 생성 | cron-job.org | 매일 18:00, 18:30 | `POST /admin/generate-post` |
+| 종목 데이터 갱신 | cron-job.org | 매일 17:30, 17:50 | `POST /admin/refresh-data` |
+| 장애 감시·잠들기 방지 | UptimeRobot | 5분마다 | `GET /static/index.html` |
+
+- cron 요청에는 헤더 `X-Admin-Token: <ADMIN_TOKEN>` 필요
+- **cron URL은 반드시 https** (http면 307 리다이렉트 → cron-job.org가 실패 처리)
+- Claude Code 예약 작업 3개는 **전부 비활성화**됨 (외부 cron으로 대체)
+
+## 8. 환경변수 (Render)
+
+| 이름 | 용도 |
+|---|---|
+| `DATABASE_URL` | Neon Postgres 연결 (시황 글 영구 저장). 없으면 SQLite로 폴백되어 재시작 시 글이 사라진다 |
+| `ADMIN_TOKEN` | 관리자 엔드포인트 인증 |
+| `ADSENSE_PUB_ID` | (미설정) 애드센스 승인 후 `pub-XXXX` 넣으면 `/ads.txt` 활성화 |
+| `SITE_URL` | (선택) sitemap·canonical에 쓸 주소. 기본값은 onrender 주소 |
+
+## 9. SEO 구조
+
+- `GET /blog` — 글 목록 (**서버 렌더**)
+- `GET /post/{id}` — 글 상세 (**서버 렌더**, 글마다 meta description·og·canonical)
+- `GET /stock/{code}` — 종목 상세 (**서버 렌더**, 약 3,377개 페이지). 종목 정보 + 같은 업종 종목 12개 + 업종 평균 등락 통계.
+  - **DB 조회만 한다.** 동조 분석(가격 히스토리 15종목 외부 fetch)은 여기서 안 돌린다 — 크롤러가 수천 페이지 훑을 때 타임아웃. 정밀 분석은 기존 `/static/result.html?code=` 버튼으로 연결.
+  - 같은 업종 종목끼리 서로 링크 → 크롤러가 링크만 타고 전 종목 도달 가능
+- `GET /sitemap.xml` — 정적 페이지 + **모든 글 URL** + **전 종목 URL** 자동 포함 (약 3,383개)
+- `GET /robots.txt`
+- 구 URL(`/static/blog.html`, `blog-post.html?id=`)은 301 리다이렉트
+
+⚠️ **2026-08-07 이전에는 블로그가 JS 렌더라 크롤러에게 빈 페이지로 보였다.** 글을 매일 쌓아도 검색 유입이 0이었던 원인. 지금은 해결됐고 색인 대기 중.
+
+## 10. 알려진 한계 / 다음에 할 만한 것
+
+- 검색 화면(`index.html`)과 분석 결과(`result.html`)는 여전히 JS 렌더 — 다만 종목 페이지(`/stock/{code}`)가 서버 렌더라 SEO는 그쪽이 담당한다.
+- 미국 종목 가격·등락률 미표시 (유료 데이터 소스 필요)
+- Render 무료 플랜 — 트래픽 늘면 유료 전환 고려 (월 $7)
+- 애드센스 신청 전 콘텐츠 더 축적 권장 (글 20~30개)
+- `requirements.txt`의 `requests`는 결제 제거 후 미사용 (무해)
+
+## 11. 애드센스 신청 시 체크리스트
+
+이미 준비된 것: 법적 페이지 3종, 지표 설명 페이지, 매일 쌓이는 시황 글, sitemap, 사이트 정상 작동.
+
+신청 전 확인:
+1. 글이 20개 이상 쌓였는지
+2. 검색 색인이 시작됐는지 (`site:stock-recommender-0swa.onrender.com` 검색)
+3. UptimeRobot이 초록(Up)인지 — 심사봇 방문 시 사이트가 자고 있으면 안 됨
+
+승인 후: 게시자 ID를 받아 `index.html` `<head>`에 스니펫 삽입 + Render에 `ADSENSE_PUB_ID` 설정.
+
+## 12. 배포 방법
+
+GitHub Desktop에서 **Commit → Push origin**. Render가 자동 배포(3~5분).
+로컬 `backend/data/app.db`는 gitignore 대상이라 배포와 무관하다.
+
+⚠️ `app.js` 수정 시 `index.html`의 `?v=N` 숫자를 올려야 사용자 브라우저가 새 파일을 받는다.

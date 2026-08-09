@@ -88,6 +88,103 @@ def render_blog_list(posts: list[dict]) -> str:
     return head + body + _FOOTER
 
 
+def _fmt_cap(cap: float | None) -> str:
+    """시가총액(원)을 조/억 단위로."""
+    if not cap:
+        return "-"
+    if cap >= 1_0000_0000_0000:
+        return f"{cap / 1_0000_0000_0000:.1f}조원"
+    return f"{cap / 1_0000_0000:.0f}억원"
+
+
+def _fmt_change(rate: float | None) -> str:
+    if rate is None:
+        return '<span class="text-slate-400">-</span>'
+    color = "text-rose-600" if rate > 0 else "text-blue-600" if rate < 0 else "text-slate-500"
+    return f'<span class="{color} font-semibold">{rate:+.2f}%</span>'
+
+
+def render_stock(stock: dict, peers: list[dict], stats: dict) -> str:
+    """종목 상세 — 크롤러가 종목명·업종·유사 종목을 HTML에서 바로 읽는다."""
+    name, code = stock["name"], stock["code"]
+    industry = stock["industry"] or "기타"
+    is_kr = stock["market"] != "S&P500"
+
+    desc = (
+        f"{name}({code})와 같은 업종 '{industry}' 종목 {stats['peer_count']}개를 시가총액 순으로 정리했습니다. "
+        f"과거 주가가 함께 오른 종목 통계(동조 분석)를 무료로 확인하세요."
+    )
+    head = _HEAD.format(
+        title=f"{_esc(name)}({_esc(code)}) 유사 종목 · 동조 분석 | 스톡메이트(StockMate)",
+        og_title=f"{_esc(name)} 유사 종목 · 동조 분석",
+        desc=_esc(desc),
+        url=f"{SITE_URL}/stock/{_esc(code)}",
+        og_type="article",
+    )
+
+    price_row = ""
+    if is_kr:
+        price = f"{stock['close_price']:,.0f}원" if stock["close_price"] else "-"
+        price_row = f"""
+        <div><dt class="text-xs text-slate-400">종가</dt><dd class="font-semibold text-slate-800">{price}</dd></div>
+        <div><dt class="text-xs text-slate-400">등락률</dt><dd>{_fmt_change(stock['change_rate'])}</dd></div>
+        <div><dt class="text-xs text-slate-400">시가총액</dt><dd class="font-semibold text-slate-800">{_fmt_cap(stock['market_cap'])}</dd></div>"""
+
+    if peers:
+        rows = "".join(
+            f"""
+        <a href="/stock/{_esc(p['code'])}" class="flex items-center gap-3 py-3 border-b border-slate-100 last:border-0 hover:bg-slate-50 -mx-2 px-2 rounded-lg transition">
+          <div class="min-w-0 flex-1">
+            <div class="font-semibold text-slate-800 truncate">{_esc(p['name'])}</div>
+            <div class="text-xs text-slate-400">{_esc(p['code'])} · {_esc(p['market'])}</div>
+          </div>
+          <div class="text-right text-sm shrink-0">
+            <div>{_fmt_change(p['change_rate'])}</div>
+            <div class="text-xs text-slate-400">{_fmt_cap(p['market_cap'])}</div>
+          </div>
+        </a>"""
+            for p in peers
+        )
+        peer_block = f'<div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 mt-4">{rows}</div>'
+    else:
+        peer_block = '<div class="text-sm text-slate-400 mt-4">같은 업종으로 분류된 다른 종목이 없습니다.</div>'
+
+    if stats["avg_change"] is not None:
+        trend = "상승" if stats["avg_change"] > 0 else "하락" if stats["avg_change"] < 0 else "보합"
+        industry_line = (
+            f"'{industry}' 업종에는 {stats['peer_count']}개 종목이 있으며, "
+            f"직전 거래일 평균 등락률은 {stats['avg_change']:+.2f}%로 {trend} 흐름이었습니다. "
+            f"이 중 {stats['up_count']}개가 상승, {stats['down_count']}개가 하락했습니다."
+        )
+    else:
+        industry_line = f"'{industry}' 업종에는 {stats['peer_count']}개 종목이 분류되어 있습니다."
+
+    body = f"""
+    <a href="/" class="text-sm text-indigo-600 hover:underline">← 종목 검색</a>
+    <h1 class="text-2xl font-extrabold text-slate-900 mt-3">{_esc(name)} <span class="text-slate-400 text-lg font-bold">{_esc(code)}</span></h1>
+    <p class="text-sm text-slate-500 mt-1">{_esc(stock['market'])} · {_esc(industry)}</p>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 mt-4">
+      <dl class="grid grid-cols-3 gap-4 text-sm">{price_row or '<div class="col-span-3 text-xs text-slate-400">미국 종목은 시세 데이터를 제공하지 않습니다.</div>'}</dl>
+      <a href="/static/result.html?code={_esc(code)}"
+         class="block text-center mt-5 bg-indigo-600 text-white text-sm font-semibold rounded-xl py-3 hover:bg-indigo-700 transition">
+        {_esc(name)} 동조 종목 분석 보기 →
+      </a>
+      <p class="text-xs text-slate-400 mt-2 text-center">과거 180일 주가로 계산한 동반 상승 확률·상관계수·상승 민감도</p>
+    </div>
+
+    <h2 class="text-lg font-bold text-slate-900 mt-8">{_esc(name)}와 같은 업종 종목</h2>
+    <p class="text-sm text-slate-500 mt-1">{_esc(industry_line)}</p>
+    {peer_block}
+
+    <div class="text-xs text-slate-400 bg-slate-100/80 rounded-xl p-3 mt-6 leading-relaxed">
+      ⚠️ 본 정보는 과거 가격 데이터에 기반한 규칙 기반 통계 정보 제공이며, 투자 자문이나 매수/매도 추천이 아닙니다.
+      <a href="/static/guide.html" class="text-indigo-500 hover:underline">지표 설명 보기</a>
+    </div>
+"""
+    return head + body + _FOOTER
+
+
 def render_post(post: dict, prev_post: dict | None = None, next_post: dict | None = None) -> str:
     title = post["title"]
     body_text = post["body"]

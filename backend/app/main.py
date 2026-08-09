@@ -69,6 +69,14 @@ def sitemap_xml():
             f"<url><loc>{SITE_URL}/post/{p['id']}</loc>"
             f"<lastmod>{p['created_at'][:10]}</lastmod></url>"
         )
+    # 전 종목 페이지 — 색인 대상이 수천 개로 늘어난다 (SEO 핵심)
+    conn = get_connection()
+    try:
+        codes = conn.execute("SELECT code FROM stocks ORDER BY market_cap IS NULL, market_cap DESC").fetchall()
+    finally:
+        conn.close()
+    urls += "".join(f"<url><loc>{SITE_URL}/stock/{r['code']}</loc></url>" for r in codes)
+
     xml = f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>'
     return PlainTextResponse(xml, media_type="application/xml")
 
@@ -105,6 +113,47 @@ def post_page(post_id: int):
         if i > 0:  # 더 최신 글
             next_post = all_posts[i - 1]
     return HTMLResponse(pages.render_post(post, prev_post, next_post))
+
+
+@app.get("/stock/{code}", response_class=HTMLResponse)
+def stock_page(code: str):
+    """서버 렌더 종목 페이지 — 종목명·업종·유사 종목이 HTML에 포함되어야 검색 색인된다.
+
+    동조 분석은 종목당 최대 15개 가격 히스토리를 외부에서 받아와야 해서 여기서 하지 않는다.
+    (크롤러가 수천 페이지를 훑을 때 타임아웃) 이 페이지는 DB 조회만 한다.
+    """
+    conn = get_connection()
+    try:
+        row = conn.execute("SELECT * FROM stocks WHERE code = ?", (code,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="존재하지 않는 종목 코드입니다.")
+        stock = dict(row)
+        industry = stock["industry"]
+
+        peers = [
+            dict(r)
+            for r in conn.execute(
+                "SELECT code, name, market, change_rate, market_cap FROM stocks "
+                "WHERE industry = ? AND code != ? ORDER BY market_cap IS NULL, market_cap DESC, name LIMIT 12",
+                (industry, code),
+            ).fetchall()
+        ]
+        s = conn.execute(
+            "SELECT COUNT(*) AS n, AVG(change_rate) AS avg_chg, "
+            "SUM(CASE WHEN change_rate > 0 THEN 1 ELSE 0 END) AS up, "
+            "SUM(CASE WHEN change_rate < 0 THEN 1 ELSE 0 END) AS down "
+            "FROM stocks WHERE industry = ?",
+            (industry,),
+        ).fetchone()
+        stats = {
+            "peer_count": s["n"],
+            "avg_change": s["avg_chg"],
+            "up_count": s["up"] or 0,
+            "down_count": s["down"] or 0,
+        }
+    finally:
+        conn.close()
+    return HTMLResponse(pages.render_stock(stock, peers, stats))
 
 
 @app.get("/api/industries")
