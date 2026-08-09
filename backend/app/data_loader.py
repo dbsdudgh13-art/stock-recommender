@@ -1,4 +1,5 @@
 """KRX 종목/가격 데이터를 FinanceDataReader에서 가져와 SQLite에 캐싱한다."""
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 
 import FinanceDataReader as fdr
@@ -82,31 +83,59 @@ def load_us_universe() -> int:
 
 
 def get_price_history(code: str) -> pd.Series:
-    """종목의 최근 N일 종가를 반환. 캐시가 오래되면 FDR에서 다시 받아온다."""
+    """종목의 최근 N일 종가를 반환. 마지막으로 받아온 지 오래됐으면 FDR에서 다시 받아온다."""
     conn = get_connection()
     try:
-        cached = conn.execute(
-            "SELECT date, close FROM price_history WHERE code = ? ORDER BY date", (code,)
-        ).fetchall()
-        is_stale = True
-        if cached:
-            last_date = datetime.fromisoformat(cached[-1]["date"])
-            is_stale = datetime.utcnow() - last_date > timedelta(hours=PRICE_CACHE_STALE_HOURS)
+        row = conn.execute(
+            "SELECT fetched_at FROM price_fetch_log WHERE code = ?", (code,)
+        ).fetchone()
+        fresh = row is not None and (
+            datetime.utcnow() - datetime.fromisoformat(row["fetched_at"])
+            < timedelta(hours=PRICE_CACHE_STALE_HOURS)
+        )
 
-        if not cached or is_stale:
-            start = (datetime.utcnow() - timedelta(days=PRICE_HISTORY_DAYS)).strftime("%Y-%m-%d")
-            df = fdr.DataReader(code, start)
-            if df.empty:
-                return pd.Series(dtype=float)
-            conn.executemany(
-                "INSERT OR REPLACE INTO price_history (code, date, close) VALUES (?, ?, ?)",
-                [(code, idx.strftime("%Y-%m-%d"), float(v)) for idx, v in df["Close"].items()],
-            )
+        if fresh:
+            cached = conn.execute(
+                "SELECT date, close FROM price_history WHERE code = ? ORDER BY date", (code,)
+            ).fetchall()
+            if cached:
+                return pd.Series({r["date"]: r["close"] for r in cached}).rename("Close")
+
+        start = (datetime.utcnow() - timedelta(days=PRICE_HISTORY_DAYS)).strftime("%Y-%m-%d")
+        df = fdr.DataReader(code, start)
+        now = datetime.utcnow().isoformat()
+        # 빈 응답도 기록 — 상장폐지·데이터 없는 종목을 매 요청마다 다시 시도하지 않도록
+        conn.execute(
+            "INSERT OR REPLACE INTO price_fetch_log (code, fetched_at) VALUES (?, ?)", (code, now)
+        )
+        if df.empty:
             conn.commit()
-            return df["Close"]
-
-        return pd.Series(
-            {row["date"]: row["close"] for row in cached}
-        ).rename("Close")
+            return pd.Series(dtype=float)
+        conn.executemany(
+            "INSERT OR REPLACE INTO price_history (code, date, close) VALUES (?, ?, ?)",
+            [(code, idx.strftime("%Y-%m-%d"), float(v)) for idx, v in df["Close"].items()],
+        )
+        conn.commit()
+        return df["Close"]
     finally:
         conn.close()
+
+
+def prefetch_price_histories(codes: list[str], workers: int = 8) -> None:
+    """여러 종목 가격을 동시에 받아 캐시를 채운다.
+
+    순차로 받으면 종목당 왕복 지연이 그대로 쌓여 조합 분석 한 번에 10초가 걸렸다.
+    각 스레드가 자기 커넥션을 열므로(get_connection) 스레드 안전하다.
+    """
+    if not codes:
+        return
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        for _ in pool.map(_safe_price_history, codes):
+            pass
+
+
+def _safe_price_history(code: str) -> None:
+    try:
+        get_price_history(code)
+    except Exception:  # 한 종목 실패가 전체 분석을 막지 않게
+        pass

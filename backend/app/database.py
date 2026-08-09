@@ -21,12 +21,20 @@ CREATE TABLE IF NOT EXISTS price_history (
     close REAL,
     PRIMARY KEY (code, date)
 );
+
+-- 마지막으로 외부에서 받아온 시각. price_history.date(거래일)로는 신선도를 알 수 없다
+-- (금요일 봉은 주말 내내 '오래된' 것으로 보여 매 요청마다 재다운로드됐다).
+CREATE TABLE IF NOT EXISTS price_fetch_log (
+    code TEXT PRIMARY KEY,
+    fetched_at TEXT NOT NULL
+);
 """
 
 
 def get_connection() -> sqlite3.Connection:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
+    # timeout: 여러 종목 가격을 병렬로 받아올 때 쓰기 잠금 대기 (기본 5초는 짧다)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
     return conn
 

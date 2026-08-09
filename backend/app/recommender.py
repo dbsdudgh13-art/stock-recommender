@@ -3,7 +3,7 @@ import random
 
 import pandas as pd
 
-from .data_loader import get_price_history
+from .data_loader import get_price_history, prefetch_price_histories
 from .database import get_connection
 
 SIMILAR_LIMIT = 3
@@ -108,6 +108,9 @@ def find_combo_candidates(code: str):
     stock, peers = find_similar(code, limit=COMBO_CANDIDATE_POOL)
     if not stock:
         return None, []
+
+    # 대상 + 후보 전 종목 가격을 먼저 병렬로 받아둔다 (아래 루프는 전부 캐시 히트가 된다)
+    prefetch_price_histories([code] + [p["code"] for p in peers])
 
     target_returns = _daily_returns(code)
     if target_returns.empty:
