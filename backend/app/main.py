@@ -1,5 +1,6 @@
 import os
 import threading
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -17,6 +18,9 @@ ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "").strip()
 
 app = FastAPI(title="종목 유사/조합 추천 MVP")
 
+# 시작 시 적재와 크론 갱신이 겹치지 않게 한다
+_refresh_lock = threading.Lock()
+
 
 def require_admin(x_admin_token: str = Header(default="")) -> None:
     """데이터 갱신/장애감시/콘텐츠 작성용 예약 작업(에이전트)이 호출하는 관리자 엔드포인트 보호.
@@ -29,12 +33,39 @@ def require_admin(x_admin_token: str = Header(default="")) -> None:
         raise HTTPException(status_code=401, detail="관리자 토큰이 올바르지 않습니다.")
 
 
+STARTUP_RETRY_DELAY = 60  # 초
+
+
+def _load_universe_safely() -> None:
+    """종목 데이터를 적재하되, 실패해도 서버는 뜨게 한다.
+
+    KRX가 응답을 안 주면 fdr.StockListing이 예외를 던진다. 예전에는 이게 startup에서
+    그대로 터져 앱이 기동을 포기했고, 배포가 통째로 실패했다 (외부 사이트 장애 = 우리 배포 실패).
+    이제는 백그라운드에서 재시도하고, 끝내 실패해도 크론(/admin/refresh-data)이 다시 시도한다.
+    """
+    if not _refresh_lock.acquire(blocking=False):
+        return
+    try:
+        for attempt in range(1, 4):
+            try:
+                load_stock_universe()
+                load_us_universe()
+                return
+            except Exception as e:
+                print(f"[startup] 종목 적재 실패 ({attempt}/3): {e}", flush=True)
+                if attempt < 3:
+                    time.sleep(STARTUP_RETRY_DELAY)
+        print("[startup] 종목 적재 포기. 크론이 다시 시도한다", flush=True)
+    finally:
+        _refresh_lock.release()
+
+
 @app.on_event("startup")
 def _startup() -> None:
     init_db()
     posts_store.init()
-    load_stock_universe()
-    load_us_universe()
+    # 적재는 수십 초 걸리고 외부 사이트에 의존한다 → 백그라운드로. 실패해도 서버는 뜬다
+    threading.Thread(target=_load_universe_safely, daemon=True).start()
 
 
 # 게시자 ID는 페이지 소스에 그대로 노출되는 공개 값이라 기본값으로 둔다 (환경변수로 덮어쓸 수 있음)
@@ -246,9 +277,6 @@ def get_post(post_id: int):
 
 
 # ── 아래는 예약 작업(데이터 갱신/장애감시/SEO 콘텐츠 에이전트)이 호출하는 관리자 전용 엔드포인트 ──
-
-
-_refresh_lock = threading.Lock()
 
 
 def _refresh_all() -> None:
