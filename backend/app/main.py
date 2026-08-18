@@ -64,6 +64,33 @@ def _load_universe_safely() -> None:
             print(f"[startup] 스냅샷 폴백도 실패: {e}", flush=True)
     finally:
         _refresh_lock.release()
+    _precompute_if_empty()
+
+
+def _precompute_if_empty() -> None:
+    """동조 캐시가 비어 있으면 채운다.
+
+    무료 플랜은 재배포마다 디스크가 초기화돼 combo_cache가 사라진다. 그러면 종목 페이지의
+    고유 문장이 없어져 중복 콘텐츠처럼 보인다. 배포할 때마다 손으로 갱신하지 않도록 자동화.
+    """
+    conn = get_connection()
+    try:
+        cached = conn.execute("SELECT COUNT(*) AS c FROM combo_cache").fetchone()["c"]
+        stocks = conn.execute("SELECT COUNT(*) AS c FROM stocks").fetchone()["c"]
+    finally:
+        conn.close()
+    if cached or not stocks:
+        return
+    if not _refresh_lock.acquire(blocking=False):
+        return
+    try:
+        print("[startup] 동조 캐시가 비어 사전 계산을 시작한다", flush=True)
+        n = recommender.precompute_combos()
+        print(f"[startup] 사전 계산 완료: {n}종목", flush=True)
+    except Exception as e:
+        print(f"[startup] 사전 계산 실패: {e}", flush=True)
+    finally:
+        _refresh_lock.release()
 
 
 @app.on_event("startup")
@@ -119,6 +146,12 @@ def sitemap_xml():
     finally:
         conn.close()
     urls += "".join(f"<url><loc>{SITE_URL}/stock/{r['code']}</loc></url>" for r in codes)
+    # 종목 목록 페이지 — 크롤러가 여기서 종목 페이지로 퍼져 나간다
+    list_pages = max(1, (len(codes) + STOCKS_PER_PAGE - 1) // STOCKS_PER_PAGE)
+    urls += "".join(
+        f"<url><loc>{SITE_URL}/stocks{'' if n == 1 else f'?page={n}'}</loc></url>"
+        for n in range(1, list_pages + 1)
+    )
 
     xml = f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>'
     return PlainTextResponse(xml, media_type="application/xml")
@@ -156,6 +189,31 @@ def post_page(post_id: int):
         if i > 0:  # 더 최신 글
             next_post = all_posts[i - 1]
     return HTMLResponse(pages.render_post(post, prev_post, next_post))
+
+
+STOCKS_PER_PAGE = 100
+
+
+@app.get("/stocks", response_class=HTMLResponse)
+def stocks_page(page: int = Query(1, ge=1)):
+    """시총순 전 종목 목록. 크롤러가 링크를 타고 종목 페이지에 닿게 하는 경로."""
+    conn = get_connection()
+    try:
+        total = conn.execute("SELECT COUNT(*) AS c FROM stocks").fetchone()["c"]
+        total_pages = max(1, (total + STOCKS_PER_PAGE - 1) // STOCKS_PER_PAGE)
+        if page > total_pages:
+            raise HTTPException(status_code=404, detail="존재하지 않는 페이지입니다.")
+        rows = [
+            dict(r)
+            for r in conn.execute(
+                "SELECT code, name, market, industry, change_rate, market_cap FROM stocks "
+                "ORDER BY market_cap IS NULL, market_cap DESC, code LIMIT ? OFFSET ?",
+                (STOCKS_PER_PAGE, (page - 1) * STOCKS_PER_PAGE),
+            ).fetchall()
+        ]
+    finally:
+        conn.close()
+    return HTMLResponse(pages.render_stock_list(rows, page, total_pages, total))
 
 
 @app.get("/stock/{code}", response_class=HTMLResponse)

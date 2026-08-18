@@ -43,6 +43,8 @@ def test_startup_falls_back_to_snapshot():
     main.load_stock_universe = boom
     main.load_us_universe = boom
     main.STARTUP_RETRY_DELAY = 0
+    # 폴백 후 자동 사전 계산이 실제로 500종목 시세를 받으러 가지 않게 막는다
+    main.recommender.precompute_combos = lambda *a, **k: 0
 
     main._load_universe_safely()  # 동기 호출
 
@@ -54,8 +56,35 @@ def test_startup_falls_back_to_snapshot():
     assert n > 3000, f"폴백 후에도 DB가 비었다: {n}"
 
 
+def test_stock_list_pagination():
+    """목록 페이지가 전 종목을 빠짐없이 덮는지."""
+    from fastapi import HTTPException
+
+    data_loader.load_snapshot()
+    conn = database.get_connection()
+    total = conn.execute("SELECT COUNT(*) c FROM stocks").fetchone()["c"]
+    conn.close()
+
+    expected_pages = -(-total // main.STOCKS_PER_PAGE)  # 올림 나눗셈
+
+    first = main.stocks_page(1).body.decode()
+    assert f"전체 {expected_pages}페이지" in first, "페이지 수 표기가 틀렸다"
+    assert first.count('href="/stock/') >= main.STOCKS_PER_PAGE, "종목 링크가 부족하다"
+    assert 'href="/stocks?page=2"' in first, "다음 페이지 링크가 없다"
+
+    last = main.stocks_page(expected_pages).body.decode()
+    assert 'href="/stock/' in last, "마지막 페이지가 비었다"
+
+    try:
+        main.stocks_page(expected_pages + 1)
+        raise AssertionError("범위를 넘은 페이지가 404를 내지 않았다")
+    except HTTPException as e:
+        assert e.status_code == 404
+
+
 if __name__ == "__main__":
     database.init_db()
     test_snapshot_file_is_sane()
     test_startup_falls_back_to_snapshot()
+    test_stock_list_pagination()
     print("OK")

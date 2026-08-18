@@ -16,6 +16,9 @@ database.DB_PATH = Path(tempfile.mkdtemp()) / "test.db"
 
 from app import main  # noqa: E402
 
+# 폴백 뒤 자동 사전 계산이 실제 시세를 받으러 가지 않게 막는다 (이 파일은 기동 흐름만 본다)
+main.recommender.precompute_combos = lambda *a, **k: 0
+
 
 def test_startup_survives_krx_failure():
     calls = []

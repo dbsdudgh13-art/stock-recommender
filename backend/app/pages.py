@@ -36,6 +36,7 @@ _FOOTER = """
     <footer class="mt-12 pt-6 border-t border-slate-200 text-xs text-slate-400">
       <div class="flex flex-wrap gap-x-4 gap-y-2">
         <a href="/blog" class="hover:underline">오늘의 시황</a>
+        <a href="/stocks" class="hover:underline">종목 목록</a>
         <a href="/static/guide.html" class="hover:underline">지표 설명</a>
         <a href="/static/about.html" class="hover:underline">소개 · 문의</a>
         <a href="/static/privacy.html" class="hover:underline">개인정보처리방침</a>
@@ -220,6 +221,65 @@ def render_stock(stock: dict, peers: list[dict], stats: dict, combo: list[dict] 
     <div class="text-xs text-slate-400 bg-slate-100/80 rounded-xl p-3 mt-6 leading-relaxed">
       ⚠️ 본 정보는 과거 가격 데이터에 기반한 규칙 기반 통계 정보 제공이며, 투자 자문이나 매수/매도 추천이 아닙니다.
       <a href="/static/guide.html" class="text-indigo-500 hover:underline">지표 설명 보기</a>
+    </div>
+"""
+    return head + body + _FOOTER
+
+
+def render_stock_list(stocks: list[dict], page: int, total_pages: int, total: int) -> str:
+    """시총순 종목 목록 (서버 렌더).
+
+    크롤러가 종목 페이지에 닿는 경로가 sitemap뿐이면 '발견됨 - 색인되지 않음'에 계속 머문다.
+    링크로 연결된 페이지를 구글이 우선 크롤하므로, 모든 페이지 푸터에서 두 클릭 안에
+    전 종목에 도달할 수 있게 한다.
+    """
+    desc = (
+        f"코스피·코스닥·S&P500 전 종목 {total:,}개를 시가총액 순으로 정리했습니다. "
+        f"종목을 고르면 같은 업종에서 과거 주가가 함께 오른 종목 통계를 볼 수 있습니다."
+    )
+    url = f"{SITE_URL}/stocks" + (f"?page={page}" if page > 1 else "")
+    head = _HEAD.format(
+        title=f"전체 종목 목록 ({page}/{total_pages}) | 스톡메이트(StockMate)",
+        og_title="전체 종목 목록 - 스톡메이트",
+        desc=_esc(desc),
+        url=url,
+        og_type="website",
+    )
+
+    rows = "".join(
+        f"""
+        <a href="/stock/{_esc(s['code'])}" class="flex items-center gap-3 py-2.5 border-b border-slate-100 last:border-0 hover:bg-slate-50 -mx-2 px-2 rounded-lg transition">
+          <div class="min-w-0 flex-1">
+            <div class="font-semibold text-slate-800 truncate">{_esc(s['name'])}</div>
+            <div class="text-xs text-slate-400 truncate">{_esc(s['code'])} · {_esc(s['market'])} · {_esc(s['industry'] or '기타')}</div>
+          </div>
+          <div class="text-right text-sm shrink-0">
+            <div>{_fmt_change(s['change_rate'])}</div>
+            <div class="text-xs text-slate-400">{_fmt_cap(s['market_cap'])}</div>
+          </div>
+        </a>"""
+        for s in stocks
+    )
+
+    # 페이지 번호를 전부 노출한다 — 크롤러가 한 번에 모든 목록 페이지를 발견한다
+    nums = "".join(
+        f'<a href="/stocks?page={n}" class="px-2.5 py-1 rounded-lg {"bg-indigo-600 text-white font-bold" if n == page else "bg-white border border-slate-200 text-slate-600 hover:border-indigo-300"}">{n}</a>'
+        for n in range(1, total_pages + 1)
+    )
+
+    body = f"""
+    <a href="/" class="text-sm text-indigo-600 hover:underline">← 종목 검색</a>
+    <h1 class="text-2xl font-extrabold text-slate-900 mt-3">전체 종목 목록</h1>
+    <p class="text-sm text-slate-500 mt-1">{_esc(desc)}</p>
+    <p class="text-xs text-slate-400 mt-2">{page}페이지 / 전체 {total_pages}페이지 · 시가총액 순</p>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 mt-4">{rows}</div>
+
+    <div class="flex flex-wrap gap-1.5 text-xs mt-5">{nums}</div>
+
+    <div class="text-xs text-slate-400 bg-slate-100/80 rounded-xl p-3 mt-6 leading-relaxed">
+      시가총액과 등락률은 데이터 갱신 시점 기준입니다. 각 종목 페이지에서 같은 업종 종목과의
+      동조 통계를 확인할 수 있습니다. <a href="/static/guide.html" class="text-indigo-500 hover:underline">지표 설명 보기</a>
     </div>
 """
     return head + body + _FOOTER
