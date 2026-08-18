@@ -26,6 +26,7 @@ _HEAD = """<!doctype html>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
 <style>body {{ font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; }}</style>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4920759454915079" crossorigin="anonymous"></script>
 </head>
 <body class="min-h-screen" style="background: radial-gradient(1200px 500px at 50% -10%, #eef2ff, #f8fafc);">
   <div class="max-w-2xl mx-auto px-4 py-10">

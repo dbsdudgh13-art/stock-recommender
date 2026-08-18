@@ -37,7 +37,8 @@ def _startup() -> None:
     load_us_universe()
 
 
-ADSENSE_PUB_ID = os.environ.get("ADSENSE_PUB_ID", "").strip()  # 예: pub-1234567890123456
+# 게시자 ID는 페이지 소스에 그대로 노출되는 공개 값이라 기본값으로 둔다 (환경변수로 덮어쓸 수 있음)
+ADSENSE_PUB_ID = os.environ.get("ADSENSE_PUB_ID", "pub-4920759454915079").strip()
 SITE_URL = os.environ.get("SITE_URL", "https://stock-recommender-0swa.onrender.com").rstrip("/")
 
 
