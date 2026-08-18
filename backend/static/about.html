@@ -3,6 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="스톡메이트는 종목을 검색하면 같은 업종에서 과거 주가가 함께 움직인 종목을 통계로 보여주는 무료 사이트입니다. 만든 이유, 데이터 출처, 계산 방식, 하지 않는 일을 정리했습니다." />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="소개 · 문의 | 스톡메이트(StockMate)" />
+<link rel="canonical" href="https://stock-recommender-0swa.onrender.com/static/about.html" />
 <title>소개 · 문의 | 스톡메이트(StockMate)</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
@@ -14,27 +18,103 @@
   <div class="max-w-2xl mx-auto px-4 py-10">
     <a href="/static/index.html" class="text-sm text-indigo-600 hover:underline">← 홈으로 돌아가기</a>
 
-    <div class="bg-white/90 backdrop-blur rounded-2xl shadow-lg shadow-indigo-100 border border-white p-8 mt-4 text-sm text-slate-700 leading-relaxed space-y-5">
-      <h1 class="text-xl font-extrabold text-slate-900">소개</h1>
+    <div class="bg-white/90 backdrop-blur rounded-2xl shadow-lg shadow-indigo-100 border border-white p-8 mt-4 text-sm text-slate-700 leading-relaxed space-y-6">
+      <div>
+        <div class="text-xs font-bold text-indigo-600 tracking-wide mb-2">STOCKMATE 스톡메이트</div>
+        <h1 class="text-xl font-extrabold text-slate-900">소개</h1>
+      </div>
+
       <p>
-        <strong>스톡메이트(StockMate)</strong>는 국내(코스피·코스닥)와 미국(S&amp;P500) 종목을 검색하면 같은 분야의 유사 종목과,
-        상관계수 기반으로 과거 주가가 함께 움직인 종목·업종 추이 통계를 제공하는 서비스입니다.
-        모든 정보는 과거 시세 데이터를 기반으로 한 규칙 기반 통계이며, 특정 종목의 매수·매도를 권유하는 투자자문이 아닙니다.
+        <strong>스톡메이트(StockMate)</strong>는 국내(코스피·코스닥)와 미국(S&amp;P500) 종목을 검색하면,
+        같은 업종에서 <strong>과거 주가가 함께 움직였던 종목</strong>을 통계로 보여주는 사이트입니다.
+        2026년 7월부터 개인이 만들어 운영하고 있으며, 모든 기능이 무료이고 회원가입을 받지 않습니다.
       </p>
 
       <section>
-        <h2 class="font-bold text-slate-800 mb-1">데이터 출처</h2>
-        <p>종목·업종·시세 데이터는 FinanceDataReader(KRX 공개 데이터)를 통해 제공됩니다.</p>
+        <h2 class="font-bold text-slate-800 mb-2">왜 만들었나</h2>
+        <p>
+          종목 게시판이나 뉴스에서 "A가 오르면 B도 오른다"는 이야기를 자주 봅니다.
+          그런데 정말 그런지 숫자로 확인해 주는 곳은 찾기 어려웠습니다.
+          대부분 "누가 그렇게 말하더라" 수준에서 끝나고, 확인하려면
+          직접 시세를 받아 표 계산기에 넣어야 했습니다.
+        </p>
+        <p class="mt-2">
+          그 확인 작업을 자동으로 해 두면 쓸모 있겠다는 생각에서 시작했습니다.
+          <strong>실제로 며칠이나 같이 올랐는지</strong>를 세어 보여주는 것,
+          그게 이 사이트가 하는 일의 전부입니다.
+        </p>
       </section>
 
       <section>
-        <h2 class="font-bold text-slate-800 mb-1">문의</h2>
-        <p>서비스 이용 중 문의사항이나 오류 제보는 아래 이메일로 연락해 주세요.</p>
+        <h2 class="font-bold text-slate-800 mb-2">어떻게 계산하나</h2>
+        <p>
+          검색한 종목과 같은 업종에 속한 종목들을 놓고, 최근 <strong>180일 일별 종가</strong>를 비교합니다.
+          검색한 종목이 오른 날만 골라내 그중 며칠이나 함께 올랐는지(동반 상승 확률),
+          그런 날 얼마나 크게 올랐는지(상승 민감도), 전체 기간의 움직임이 얼마나 닮았는지(상관계수)를 계산하고,
+          이 세 값을 합쳐 0~100점의 동조 점수를 냅니다.
+        </p>
+        <p class="mt-2">
+          <strong>인공지능이나 뉴스 분석은 쓰지 않습니다.</strong> 전부 공개된 가격 데이터를 집계한 규칙 기반 계산이며,
+          계산식은 <a href="/static/article/comovement-score.html" class="text-indigo-600 hover:underline">동조 점수 계산 방식</a> 글에 그대로 공개돼 있습니다.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-bold text-slate-800 mb-2">하지 않는 일</h2>
+        <ul class="list-disc pl-5 space-y-1">
+          <li>주가 예측 — 앞으로 오를 종목을 고르지 않습니다</li>
+          <li>매수·매도 추천 — 특정 종목을 사거나 팔라고 하지 않습니다</li>
+          <li>유료 판매 — 결제 기능 자체가 없습니다</li>
+          <li>개인 맞춤 상담 — 이용자별 투자 조언을 제공하지 않습니다</li>
+        </ul>
+        <p class="mt-2">
+          여기 표시되는 모든 숫자는 <strong>"과거에 이랬다"는 기록</strong>입니다.
+          앞으로도 같은 관계가 이어진다는 보장은 없습니다.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-bold text-slate-800 mb-2">데이터 출처와 갱신</h2>
+        <p>
+          종목·업종·시세 데이터는 FinanceDataReader를 통해 한국거래소(KRX) 및 미국 시장의 공개 데이터를 사용합니다.
+          실시간 시세가 아닌 <strong>일별 종가</strong> 기준입니다.
+        </p>
+        <p class="mt-2">
+          평일 오후 5시 30분에 전 종목 데이터를 갱신하고, 오후 6시에 그날의 시황 요약을 게시합니다.
+          주말과 공휴일에는 거래가 없으므로 갱신하지 않습니다.
+          업종 분류는 한국거래소 공개 데이터를 가공 없이 그대로 사용합니다
+          (<a href="/static/article/industry-classification.html" class="text-indigo-600 hover:underline">직관과 다르게 보이는 이유</a>).
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-bold text-slate-800 mb-2">운영</h2>
+        <p>
+          개인이 만들고 운영하는 사이트입니다. 법인이나 금융투자업 등록 기관이 아니며,
+          투자자문업·투자일임업 등 어떤 금융 관련 인가도 받지 않았습니다.
+          사이트 운영 비용은 광고로 충당할 예정입니다.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-bold text-slate-800 mb-2">문의</h2>
+        <p>
+          데이터 오류 제보, 기능 제안, 기타 문의는 아래 이메일로 보내 주세요.
+          오류 제보 시 종목 코드를 함께 적어 주시면 확인이 빠릅니다.
+        </p>
         <p class="font-medium text-slate-800 mt-1">opedband@naver.com</p>
       </section>
 
-      <div class="flex gap-4 text-xs text-slate-400 pt-2 border-t border-slate-100">
+      <p class="text-xs text-slate-400 pt-3 border-t border-slate-100">
+        ⚠️ 스톡메이트가 제공하는 모든 정보는 과거 데이터를 집계한 통계이며,
+        투자 자문이나 특정 종목의 매수·매도 권유가 아닙니다.
+        투자 판단과 그 결과에 대한 책임은 이용자 본인에게 있습니다.
+      </p>
+
+      <div class="flex flex-wrap gap-4 text-xs text-slate-400 pt-2 border-t border-slate-100">
         <a href="/static/guide.html" class="hover:underline">지표 설명</a>
+        <a href="/static/article/faq.html" class="hover:underline">자주 묻는 질문</a>
+        <a href="/blog" class="hover:underline">오늘의 시황</a>
         <a href="/static/privacy.html" class="hover:underline">개인정보처리방침</a>
         <a href="/static/terms.html" class="hover:underline">이용약관</a>
       </div>

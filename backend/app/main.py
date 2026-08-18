@@ -62,7 +62,11 @@ def robots_txt():
 @app.get("/sitemap.xml", response_class=PlainTextResponse)
 def sitemap_xml():
     static_paths = ["/", "/blog", "/static/guide.html",
-                    "/static/about.html", "/static/privacy.html", "/static/terms.html"]
+                    "/static/about.html", "/static/privacy.html", "/static/terms.html",
+                    "/static/article/comovement-score.html",
+                    "/static/article/correlation-pitfalls.html",
+                    "/static/article/industry-classification.html",
+                    "/static/article/faq.html"]
     urls = "".join(f"<url><loc>{SITE_URL}{p}</loc></url>" for p in static_paths)
     # 시황 글 전부 포함 — 크롤러가 개별 글 URL을 알 수 있어야 색인된다
     for p in posts_store.list_posts(1000):

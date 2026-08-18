@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="같은 업종 종목끼리는 상관계수 0.5 정도가 기본값에 가깝습니다. 시장 전체가 함께 움직이기 때문입니다. 상관계수를 읽을 때 빠지기 쉬운 오해 세 가지를 정리했습니다." />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="상관계수 0.7은 높은 걸까 — 흔한 오해 세 가지" />
+<link rel="canonical" href="https://stock-recommender-0swa.onrender.com/static/article/correlation-pitfalls.html" />
+<title>상관계수 0.7은 높은 걸까 | 스톡메이트(StockMate)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<style>
+  body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; }
+</style>
+</head>
+<body class="min-h-screen" style="background: radial-gradient(1200px 500px at 50% -10%, #eef2ff, #f8fafc);">
+  <div class="max-w-2xl mx-auto px-4 py-10">
+    <a href="/static/guide.html" class="text-sm text-indigo-600 hover:underline">← 지표 설명으로</a>
+
+    <article class="mt-4">
+      <div class="text-xs font-bold text-indigo-600 tracking-wide mb-2">읽을거리</div>
+      <h1 class="text-2xl font-extrabold text-slate-900 leading-snug">상관계수 0.7은 높은 걸까</h1>
+      <p class="text-sm text-slate-500 mt-2">종목 통계를 볼 때 빠지기 쉬운 오해 세 가지</p>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mt-5 text-sm text-slate-700 leading-relaxed space-y-4">
+        <p>
+          상관계수는 두 종목의 일별 수익률이 얼마나 같은 방향으로 움직였는지를 -1에서 1 사이 숫자로 나타낸 값입니다.
+          숫자 자체는 간단한데, 해석에서 실수가 자주 나옵니다. 자주 보이는 오해 세 가지를 정리했습니다.
+        </p>
+
+        <h2 class="font-bold text-slate-800 text-base pt-2">오해 1. 0.5면 절반쯤 관련 있다는 뜻이다</h2>
+        <p>
+          아닙니다. 상관계수는 비율이 아닙니다. 0.5는 "50% 관련"이 아니라,
+          한 종목의 수익률 변동으로 다른 종목의 변동을 설명할 수 있는 정도가 <strong>대략 25%</strong>라는 뜻에 가깝습니다
+          (상관계수의 제곱이 설명력에 해당합니다). 0.7이라도 설명력은 절반 정도입니다.
+        </p>
+
+        <h2 class="font-bold text-slate-800 text-base pt-2">오해 2. 상관계수가 높으면 그 두 종목이 특별한 관계다</h2>
+        <p>
+          이게 가장 조심해야 할 부분입니다. 국내 증시에서 <strong>같은 업종 종목끼리 0.4~0.6은 흔한 기본값</strong>입니다.
+          두 종목이 서로 관련돼서가 아니라, 코스피가 오르는 날엔 대부분의 종목이 같이 오르기 때문입니다.
+          시장 전체의 움직임이 모든 종목의 상관계수를 아래에서 밀어 올립니다.
+        </p>
+        <p>
+          그래서 "상관계수가 0.55니까 관련이 깊다"는 판단은 거의 의미가 없습니다.
+          같은 업종 안에서 <strong>다른 종목들보다 얼마나 높은지</strong>를 봐야 정보가 됩니다.
+          스톡메이트가 종목 페이지에서 항상 같은 업종 후보들을 나란히 보여주는 것도 이 때문입니다.
+        </p>
+
+        <h2 class="font-bold text-slate-800 text-base pt-2">오해 3. 같이 올랐으니 인과관계가 있다</h2>
+        <p>
+          통계에서 가장 오래된 함정입니다. A가 오를 때 B도 올랐다는 기록은
+          A가 B를 끌어올렸다는 근거가 되지 못합니다. 실제로는 세 번째 요인이 둘 다를 움직인 경우가 훨씬 많습니다.
+          환율, 금리, 업종 전체에 영향을 주는 정책 발표, 해외 동종 업체의 실적 등이 대표적입니다.
+        </p>
+        <p>
+          스톡메이트가 "수혜주"라는 표현 대신 <strong>"함께 오른 종목"</strong>이라는 표현을 쓰는 이유가 여기 있습니다.
+          기록된 것은 동시성이지 인과가 아닙니다.
+        </p>
+
+        <h2 class="font-bold text-slate-800 text-base pt-2">그래서 무엇을 봐야 하나</h2>
+        <p>
+          상관계수 하나만 보지 말고, <strong>동반 상승 확률과 같이 보는 것</strong>을 권합니다.
+          상관계수는 값의 크기까지 반영하기 때문에 며칠간의 급등락에 크게 흔들리지만,
+          동반 상승 확률은 방향만 세기 때문에 상대적으로 안정적입니다.
+          두 지표가 모두 높으면 최소한 "과거 구간에서는 꾸준히 같이 움직였다"고 말할 수 있습니다.
+        </p>
+        <p>
+          그리고 이 모든 건 과거 180일 기록입니다.
+          기업의 사업 구조가 바뀌거나 시장 환경이 달라지면 관계는 얼마든지 끊어집니다.
+        </p>
+
+        <p class="text-xs text-slate-400 pt-3 border-t border-slate-100">
+          ⚠️ 이 글의 모든 설명은 과거 가격 데이터 통계에 대한 것입니다.
+          투자 자문이나 특정 종목의 매수·매도 권유가 아니며, 투자 판단과 책임은 이용자 본인에게 있습니다.
+        </p>
+      </div>
+
+      <div class="mt-6 text-sm">
+        <div class="font-bold text-slate-800 mb-2">이어서 읽기</div>
+        <div class="space-y-2">
+          <a href="/static/article/comovement-score.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">동조 점수는 어떻게 계산되나</a>
+          <a href="/static/article/industry-classification.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">삼성전자는 왜 반도체 업종이 아닐까</a>
+        </div>
+      </div>
+    </article>
+
+    <footer class="mt-12 pt-6 border-t border-slate-200 text-xs text-slate-400">
+      <div class="flex flex-wrap gap-x-4 gap-y-2">
+        <a href="/blog" class="hover:underline">오늘의 시황</a>
+        <a href="/static/guide.html" class="hover:underline">지표 설명</a>
+        <a href="/static/about.html" class="hover:underline">소개 · 문의</a>
+        <a href="/static/privacy.html" class="hover:underline">개인정보처리방침</a>
+        <a href="/static/terms.html" class="hover:underline">이용약관</a>
+      </div>
+      <p class="mt-3 leading-relaxed">스톡메이트(StockMate) · 문의 opedband@naver.com</p>
+    </footer>
+  </div>
+</body>
+</html>

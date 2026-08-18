@@ -191,7 +191,7 @@ def render_stock(stock: dict, peers: list[dict], stats: dict, combo: list[dict] 
         )
         combo_block = f"""
     <h2 class="text-lg font-bold text-slate-900 mt-8">{_esc(name)}{wa} 함께 오른 종목</h2>
-    <p class="text-sm text-slate-500 mt-1">최근 180거래일 동안 {_esc(name)}{ga} 상승한 날, 같은 업종에서 함께 오르는 경향이 가장 강했던 종목입니다.</p>
+    <p class="text-sm text-slate-500 mt-1">최근 180일(약 6개월) 동안 {_esc(name)}{ga} 상승한 날, 같은 업종에서 함께 오르는 경향이 가장 강했던 종목입니다.</p>
     {cards}
 """
     else:

@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="삼성전자의 KRX 업종 분류는 반도체가 아니라 통신 및 방송 장비 제조업입니다. 표준산업분류가 직관과 어긋나는 이유와, 업종 기반 종목 비교를 볼 때 감안해야 할 점을 정리했습니다." />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="삼성전자는 왜 반도체 업종이 아닐까" />
+<link rel="canonical" href="https://stock-recommender-0swa.onrender.com/static/article/industry-classification.html" />
+<title>삼성전자는 왜 반도체 업종이 아닐까 | 스톡메이트(StockMate)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<style>
+  body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; }
+</style>
+</head>
+<body class="min-h-screen" style="background: radial-gradient(1200px 500px at 50% -10%, #eef2ff, #f8fafc);">
+  <div class="max-w-2xl mx-auto px-4 py-10">
+    <a href="/static/guide.html" class="text-sm text-indigo-600 hover:underline">← 지표 설명으로</a>
+
+    <article class="mt-4">
+      <div class="text-xs font-bold text-indigo-600 tracking-wide mb-2">읽을거리</div>
+      <h1 class="text-2xl font-extrabold text-slate-900 leading-snug">삼성전자는 왜 반도체 업종이 아닐까</h1>
+      <p class="text-sm text-slate-500 mt-2">업종 분류가 직관과 어긋나는 이유, 그리고 그걸 알고 봐야 하는 이유</p>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mt-5 text-sm text-slate-700 leading-relaxed space-y-4">
+        <p>
+          스톡메이트를 만들면서 가장 먼저 당황했던 지점입니다.
+          삼성전자 페이지를 열었더니 업종이 <strong>'통신 및 방송 장비 제조업'</strong>으로 찍혀 있었습니다.
+          데이터가 잘못 들어온 줄 알고 한참 코드를 뒤졌는데, 원본이 그랬습니다.
+        </p>
+
+        <h2 class="font-bold text-slate-800 text-base pt-2">한국거래소 분류는 '주된 사업' 기준</h2>
+        <p>
+          스톡메이트의 업종 정보는 한국거래소가 제공하는 공개 데이터를 그대로 씁니다.
+          이 분류는 통계청 한국표준산업분류(KSIC)를 따르는데, 기준이
+          <strong>회사가 등록한 주된 사업</strong>이지 시가총액 기여도나 시장의 인식이 아닙니다.
+        </p>
+        <p>
+          그래서 사업부가 여럿인 대기업일수록 결과가 직관과 어긋납니다.
+          투자자 대부분은 삼성전자를 반도체 회사로 인식하지만,
+          분류 체계상으로는 휴대폰·통신장비 제조가 대표 업종으로 잡혀 있습니다.
+          반면 SK하이닉스는 사업이 단일한 편이라 '반도체 제조업'으로 깔끔하게 분류됩니다.
+        </p>
+
+        <h2 class="font-bold text-slate-800 text-base pt-2">이게 종목 비교에 미치는 영향</h2>
+        <p>
+          스톡메이트의 동조 분석은 <strong>같은 업종 안에서만</strong> 후보를 찾습니다.
+          업종이 다르면 애초에 비교 대상에 들어오지 않습니다.
+          따라서 삼성전자의 동조 종목 목록에는 반도체 기업이 아니라
+          통신·방송 장비를 만드는 회사들이 올라옵니다.
+        </p>
+        <p>
+          이걸 오류로 볼 수도 있지만, 굳이 보정하지 않기로 했습니다. 이유는 두 가지입니다.
+        </p>
+        <ul class="list-disc pl-5 space-y-1">
+          <li>업종을 임의로 재분류하기 시작하면 어떤 기준이 옳은지 판단하는 주체가 사이트가 됩니다. 공개된 공식 분류를 그대로 쓰는 편이 검증 가능합니다</li>
+          <li>실제로 계산해 보면, 업종이 어긋나 보여도 동조 점수 상위에는 납득 가능한 종목이 올라오는 경우가 많습니다. 같은 대기업 밸류체인에 속한 회사들이기 때문입니다</li>
+        </ul>
+
+        <h2 class="font-bold text-slate-800 text-base pt-2">이용자가 감안할 점</h2>
+        <p>
+          업종은 <strong>후보를 좁히는 출발점</strong>이지 정답이 아닙니다.
+          특히 아래 경우에는 업종만 보고 판단하지 않는 편이 좋습니다.
+        </p>
+        <ul class="list-disc pl-5 space-y-1">
+          <li>사업부가 여러 개인 대기업 — 분류가 대표 사업 하나만 반영합니다</li>
+          <li>지주회사 — 실제 사업은 자회사가 하는데 분류는 지주사 기준입니다</li>
+          <li>최근 주력 사업을 바꾼 회사 — 분류 갱신이 늦을 수 있습니다</li>
+        </ul>
+        <p>
+          업종 분류가 어긋나 보인다면, 종목 페이지의 <strong>동조 점수와 동반 상승 확률</strong>을 먼저 보십시오.
+          업종 라벨이 뭐라고 붙어 있든, 실제 주가가 함께 움직였는지는 숫자가 말해 줍니다.
+        </p>
+
+        <p class="text-xs text-slate-400 pt-3 border-t border-slate-100">
+          ⚠️ 업종 분류는 한국거래소 공개 데이터를 가공 없이 사용합니다.
+          본 글의 내용은 데이터 해석에 대한 설명이며, 투자 자문이나 매수·매도 권유가 아닙니다.
+        </p>
+      </div>
+
+      <div class="mt-6 text-sm">
+        <div class="font-bold text-slate-800 mb-2">이어서 읽기</div>
+        <div class="space-y-2">
+          <a href="/static/article/comovement-score.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">동조 점수는 어떻게 계산되나</a>
+          <a href="/static/article/faq.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">자주 묻는 질문 — 왜 볼 때마다 다른 종목이 나오나요</a>
+        </div>
+      </div>
+    </article>
+
+    <footer class="mt-12 pt-6 border-t border-slate-200 text-xs text-slate-400">
+      <div class="flex flex-wrap gap-x-4 gap-y-2">
+        <a href="/blog" class="hover:underline">오늘의 시황</a>
+        <a href="/static/guide.html" class="hover:underline">지표 설명</a>
+        <a href="/static/about.html" class="hover:underline">소개 · 문의</a>
+        <a href="/static/privacy.html" class="hover:underline">개인정보처리방침</a>
+        <a href="/static/terms.html" class="hover:underline">이용약관</a>
+      </div>
+      <p class="mt-3 leading-relaxed">스톡메이트(StockMate) · 문의 opedband@naver.com</p>
+    </footer>
+  </div>
+</body>
+</html>
