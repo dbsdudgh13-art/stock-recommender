@@ -9,7 +9,7 @@ from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse, Red
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from .data_loader import load_stock_universe, load_us_universe
+from .data_loader import load_snapshot, load_stock_universe, load_us_universe
 from .database import get_connection, init_db
 from . import market_summary, pages, posts_store, recommender
 
@@ -55,7 +55,13 @@ def _load_universe_safely() -> None:
                 print(f"[startup] 종목 적재 실패 ({attempt}/3): {e}", flush=True)
                 if attempt < 3:
                     time.sleep(STARTUP_RETRY_DELAY)
-        print("[startup] 종목 적재 포기. 크론이 다시 시도한다", flush=True)
+        # KRX가 계속 막히면 저장소에 커밋된 스냅샷으로라도 사이트를 살린다.
+        # 이게 없으면 종목 페이지 3,377개가 전부 404가 된다 (색인·심사에 치명적).
+        try:
+            n = load_snapshot()
+            print(f"[startup] 스냅샷으로 폴백: {n}종목", flush=True)
+        except Exception as e:
+            print(f"[startup] 스냅샷 폴백도 실패: {e}", flush=True)
     finally:
         _refresh_lock.release()
 
@@ -282,7 +288,12 @@ def get_post(post_id: int):
 def _refresh_all() -> None:
     """락을 이미 쥔 상태로 호출된다 (admin_refresh_data가 획득)."""
     try:
-        load_stock_universe(force=True)
+        try:
+            load_stock_universe(force=True)
+            load_us_universe()
+        except Exception as e:
+            print(f"[refresh] KRX 적재 실패, 스냅샷으로 폴백: {e}", flush=True)
+            load_snapshot()
         # 동조 분석 사전 계산 — 종목 페이지에 실을 문장이 여기서 만들어지고, 조회 응답도 즉시가 된다
         recommender.precompute_combos()
     except Exception as e:

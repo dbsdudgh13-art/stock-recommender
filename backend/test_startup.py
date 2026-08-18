@@ -37,7 +37,17 @@ def test_startup_survives_krx_failure():
     assert len(calls) == 3, f"재시도 3회가 아님: {len(calls)}"
 
 
+def _wait_for_lock_release():
+    """앞 테스트의 백그라운드 스레드가 락을 놓을 때까지 기다린다."""
+    for _ in range(200):
+        if not main._refresh_lock.locked():
+            return
+        time.sleep(0.02)
+    raise AssertionError("락이 풀리지 않았다")
+
+
 def test_startup_normal_path():
+    _wait_for_lock_release()
     loaded = []
     main.load_stock_universe = lambda: loaded.append('kr')
     main.load_us_universe = lambda: loaded.append('us')
@@ -61,6 +71,7 @@ def test_refresh_reports_skip_when_busy():
         def __init__(self): self.tasks = []
         def add_task(self, fn, *a): self.tasks.append(fn)
 
+    _wait_for_lock_release()
     assert main._refresh_lock.acquire(blocking=False)  # 다른 작업이 도는 상황
     try:
         bg = FakeBackground()

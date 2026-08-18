@@ -1,6 +1,7 @@
 """KRX 종목/가격 데이터를 FinanceDataReader에서 가져와 SQLite에 캐싱한다."""
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import FinanceDataReader as fdr
 import pandas as pd
@@ -9,6 +10,11 @@ from .database import get_connection
 
 PRICE_HISTORY_DAYS = 180
 PRICE_CACHE_STALE_HOURS = 20
+
+# KRX가 응답하지 않을 때 쓰는 종목 목록 스냅샷. Render 서버에서 data.krx.co.kr 접근이
+# 막히는 일이 있고, 무료 플랜은 재배포마다 디스크가 초기화돼 DB가 빈 채로 뜬다.
+# 시세는 오래됐지만 종목·업종은 거의 바뀌지 않으므로 사이트가 죽는 것보다 낫다.
+SNAPSHOT_PATH = Path(__file__).resolve().parent.parent / "snapshot" / "stocks.csv"
 
 
 def load_stock_universe(force: bool = False) -> int:
@@ -38,17 +44,45 @@ def load_stock_universe(force: bool = False) -> int:
             )
             for _, r in merged.iterrows()
         ]
-        conn.executemany(
-            """
-            INSERT INTO stocks (code, name, market, industry, close_price, change_rate, market_cap, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(code) DO UPDATE SET
-                name=excluded.name, market=excluded.market, industry=excluded.industry,
-                close_price=excluded.close_price, change_rate=excluded.change_rate,
-                market_cap=excluded.market_cap, updated_at=excluded.updated_at
-            """,
-            rows,
-        )
+        _upsert_stocks(conn, rows)
+        conn.commit()
+        return len(rows)
+    finally:
+        conn.close()
+
+
+UPSERT_SQL = """
+    INSERT INTO stocks (code, name, market, industry, close_price, change_rate, market_cap, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(code) DO UPDATE SET
+        name=excluded.name, market=excluded.market, industry=excluded.industry,
+        close_price=excluded.close_price, change_rate=excluded.change_rate,
+        market_cap=excluded.market_cap, updated_at=excluded.updated_at
+"""
+
+
+def _upsert_stocks(conn, rows) -> None:
+    conn.executemany(UPSERT_SQL, rows)
+
+
+def load_snapshot() -> int:
+    """저장소에 커밋된 종목 목록으로 DB를 채운다 (KRX 실패 시 폴백)."""
+    if not SNAPSHOT_PATH.exists():
+        return 0
+    df = pd.read_csv(SNAPSHOT_PATH, dtype={"code": str})
+    now = datetime.utcnow().isoformat()
+
+    def num(v):
+        return float(v) if pd.notna(v) else None
+
+    rows = [
+        (r["code"], r["name"], r["market"], r["industry"],
+         num(r["close_price"]), num(r["change_rate"]), num(r["market_cap"]), now)
+        for _, r in df.iterrows()
+    ]
+    conn = get_connection()
+    try:
+        _upsert_stocks(conn, rows)
         conn.commit()
         return len(rows)
     finally:
