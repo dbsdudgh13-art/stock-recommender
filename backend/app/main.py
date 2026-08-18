@@ -280,19 +280,24 @@ def get_post(post_id: int):
 
 
 def _refresh_all() -> None:
-    # 크론이 17:30·17:50 두 번 호출한다 (재시도용). 앞 작업이 아직 돌면 건너뛴다
-    if not _refresh_lock.acquire(blocking=False):
-        return
+    """락을 이미 쥔 상태로 호출된다 (admin_refresh_data가 획득)."""
     try:
         load_stock_universe(force=True)
         # 동조 분석 사전 계산 — 종목 페이지에 실을 문장이 여기서 만들어지고, 조회 응답도 즉시가 된다
         recommender.precompute_combos()
+    except Exception as e:
+        print(f"[refresh] 실패: {e}", flush=True)
     finally:
         _refresh_lock.release()
 
 
 @app.post("/admin/refresh-data", dependencies=[Depends(require_admin)])
 def admin_refresh_data(background: BackgroundTasks):
+    # 크론이 17:30·17:50 두 번 호출한다 (재시도용). 앞 작업이 아직 돌면 건너뛴다.
+    # 락을 여기서 잡아야 호출자가 "정말 시작됐는지"를 응답으로 알 수 있다
+    # (예전에는 백그라운드에서 잡아 실패하면 started라고 답하고 조용히 아무것도 안 했다)
+    if not _refresh_lock.acquire(blocking=False):
+        return {"status": "skipped", "reason": "다른 갱신 작업이 실행 중"}
     # 전 종목 재적재 + 사전 계산은 수 분 걸려 백그라운드로 → 외부 크론 타임아웃 방지
     background.add_task(_refresh_all)
     return {"status": "started"}
