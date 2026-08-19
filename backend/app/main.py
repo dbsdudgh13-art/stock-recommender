@@ -435,16 +435,49 @@ def admin_create_post(body: AdminPostCreate):
     return {"id": posts_store.create_post(body.title, body.body)}
 
 
-@app.post("/admin/generate-post", dependencies=[Depends(require_admin)])
-def admin_generate_post():
-    """서버가 직접 오늘의 시황을 생성·저장. 외부 크론이 매일 호출 → 컴퓨터 없이 자동 게시."""
+POST_RETRY_DELAY = 120  # 초
+POST_MAX_ATTEMPTS = 5
+
+# 크론이 18:00·18:30 두 번 호출한다. 앞 재시도 루프가 아직 돌면 두 번째는 건너뛴다
+_post_lock = threading.Lock()
+
+
+def _generate_post_with_retry() -> None:
+    if not _post_lock.acquire(blocking=False):
+        print("[post] 이미 생성 작업이 돌고 있어 건너뛴다", flush=True)
+        return
     try:
-        title, body = market_summary.generate()
-    except market_summary.MarketClosed as e:
-        return {"skipped": "market closed", "detail": str(e)}
-    if posts_store.title_exists(title):  # 같은 날 중복 방지 (테스트/재실행 대비)
-        return {"skipped": "already exists", "title": title}
-    return {"id": posts_store.create_post(title, body), "title": title}
+        for attempt in range(1, POST_MAX_ATTEMPTS + 1):
+            try:
+                title, body = market_summary.generate()
+            except market_summary.MarketClosed as e:
+                print(f"[post] 휴장일이라 건너뛴다: {e}", flush=True)
+                return
+            except Exception as e:
+                print(f"[post] 생성 실패 ({attempt}/{POST_MAX_ATTEMPTS}): {e}", flush=True)
+                if attempt < POST_MAX_ATTEMPTS:
+                    time.sleep(POST_RETRY_DELAY)
+                continue
+            if posts_store.title_exists(title):  # 같은 날 중복 방지 (재실행 대비)
+                print(f"[post] 이미 있는 글이다: {title}", flush=True)
+                return
+            print(f"[post] 게시 완료: id={posts_store.create_post(title, body)} {title}", flush=True)
+            return
+        print("[post] 재시도를 모두 소진했다. 다음 크론이 다시 시도한다", flush=True)
+    finally:
+        _post_lock.release()
+
+
+@app.post("/admin/generate-post", dependencies=[Depends(require_admin)])
+def admin_generate_post(background: BackgroundTasks):
+    """서버가 직접 오늘의 시황을 생성·저장. 외부 크론이 매일 호출 → 컴퓨터 없이 자동 게시.
+
+    KRX가 간헐적으로 응답하지 않아 2026-08-18 시황이 통째로 누락됐다. 전종목 API는 당일
+    데이터만 주므로 지나간 날은 복구할 수 없다. 그래서 실패하면 그 자리에서 재시도한다.
+    재시도에 수 분이 걸려 크론 타임아웃을 넘기므로 백그라운드로 돌린다.
+    """
+    background.add_task(_generate_post_with_retry)
+    return {"status": "started"}
 
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR, html=True), name="static")
