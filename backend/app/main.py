@@ -372,6 +372,42 @@ def admin_refresh_data(background: BackgroundTasks):
     return {"status": "started"}
 
 
+@app.get("/admin/diag", dependencies=[Depends(require_admin)])
+def admin_diag():
+    """이 서버에서 어떤 데이터 소스에 닿을 수 있는지 확인한다.
+
+    Render에서 data.krx.co.kr 전종목 API가 막혀 시황 생성이 중단됐다. 대체 소스를 고르려면
+    무엇이 되고 무엇이 안 되는지부터 알아야 한다. 로컬(한국)에서는 전부 되므로 여기서만 확인 가능.
+    """
+    import urllib.request
+
+    import FinanceDataReader as fdr
+
+    def probe(name, fn):
+        try:
+            return {"source": name, "ok": True, "detail": fn()}
+        except Exception as e:
+            return {"source": name, "ok": False, "detail": f"{type(e).__name__}: {e}"[:200]}
+
+    def http(url):
+        def go():
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=15) as r:
+                return f"http {r.status}, {len(r.read(2000))}바이트(선두)"
+        return go
+
+    return {
+        "checks": [
+            probe("fdr.DataReader(005930)", lambda: f"{len(fdr.DataReader('005930', '2026-08-01'))}행"),
+            probe("fdr.StockListing(KRX)", lambda: f"{len(fdr.StockListing('KRX'))}종목"),
+            probe("fdr.StockListing(KOSPI)", lambda: f"{len(fdr.StockListing('KOSPI'))}종목"),
+            probe("fdr.StockListing(S&P500)", lambda: f"{len(fdr.StockListing('S&P500'))}종목"),
+            probe("http data.krx.co.kr", http("http://data.krx.co.kr/comm/bldAttendant/executeForResourceBundle.cmd?baseName=krx.mdc.i18n.component&key=B128.bld")),
+            probe("http finance.naver.com", http("https://finance.naver.com/sise/sise_market_sum.naver?sosok=0&page=1")),
+        ]
+    }
+
+
 @app.get("/admin/health", dependencies=[Depends(require_admin)])
 def admin_health():
     conn = get_connection()
