@@ -16,6 +16,8 @@ SHOW = 5            # 강세/약세 각각 몇 개 나열할지
 INDUSTRY_MIN = 5    # 업종 집계에 포함할 최소 종목 수
 INDUSTRY_SHOW = 3   # 강세/약세 업종 몇 개씩
 AMOUNT_SHOW = 5     # 거래대금 상위 몇 개
+FALLBACK_LIMIT = 500  # KRX 전종목 API 실패 시 집계할 시총 상위 종목 수
+FALLBACK_MIN = 100    # 이보다 적게 모이면 글을 만들지 않는다 (부실한 통계보다 누락이 낫다)
 DISCLAIMER = "본 정보는 투자자문이 아니며 과거 데이터를 요약한 참고 정보입니다. 특정 종목의 매수·매도를 권유하지 않습니다."
 
 
@@ -158,19 +160,28 @@ def _size_and_breadth(df: pd.DataFrame) -> list[str]:
     """대형주 vs 소형주 온도차, 급등락 종목 수, 거래대금 쏠림."""
     lines = []
 
-    big = df.nlargest(100, "Marcap")["ChagesRatio"].mean()
-    small = df.nsmallest(1000, "Marcap")["ChagesRatio"].mean()
+    # 표본 크기에 맞춰 두 구간을 잡는다. 개수를 고정하면 표본이 작을 때 상·하위가 겹쳐
+    # 같은 종목을 양쪽에서 세게 되고, 문장의 "하위 1,000개"도 사실과 달라진다.
+    ranked = df.sort_values("Marcap", ascending=False)
+    n = len(ranked)
+    big_n = min(100, n // 3)
+    small_n = min(1000, n - big_n)
+    if big_n >= 20 and small_n >= 20:
+        big = ranked.head(big_n)["ChagesRatio"].mean()
+        small = ranked.tail(small_n)["ChagesRatio"].mean()
+    else:
+        big = small = float("nan")
     if pd.notna(big) and pd.notna(small):
         diff = big - small
         if abs(diff) >= 0.5:
             side = "대형주" if diff > 0 else "중소형주"
             lines.append(
-                f"시가총액 규모별로는 상위 100개 종목이 평균 {_pct(big)}, 하위 1,000개 종목이 평균 {_pct(small)}로 "
+                f"시가총액 규모별로는 상위 {big_n}개 종목이 평균 {_pct(big)}, 하위 {small_n:,}개 종목이 평균 {_pct(small)}로 "
                 f"{side} 쪽에 매수세가 더 몰렸습니다. 규모별 온도차가 {abs(diff):.2f}%p 벌어진 하루였습니다."
             )
         else:
             lines.append(
-                f"시가총액 규모별로는 상위 100개 종목 평균 {_pct(big)}, 하위 1,000개 종목 평균 {_pct(small)}로 "
+                f"시가총액 규모별로는 상위 {big_n}개 종목 평균 {_pct(big)}, 하위 {small_n:,}개 종목 평균 {_pct(small)}로 "
                 f"대형주와 중소형주가 비슷한 흐름을 보였습니다."
             )
 
@@ -231,6 +242,60 @@ def _industry_concentration(df: pd.DataFrame) -> list[str]:
     return [msg]
 
 
+def _listing_from_price_cache(today: str, limit: int = FALLBACK_LIMIT) -> pd.DataFrame:
+    """KRX 전종목 API 없이, 개별 종목 가격으로 시황용 표를 만든다.
+
+    data.krx.co.kr의 전종목 API가 간헐적으로 죽는다(특히 주말 다음 거래일). 그 하나 때문에
+    시황이 통째로 누락돼 왔다. 개별 종목 가격(fdr.DataReader, 네이버 경유)은 지금까지
+    실패한 적이 없으므로, 시총 상위 종목만 그 경로로 모아 집계한다.
+
+    거래대금(Amount)은 이 경로로 얻을 수 없어 빠진다. 관련 문단은 호출부에서 자동으로 생략된다.
+    """
+    from .data_loader import get_price_history, prefetch_price_histories
+    from .database import get_connection
+
+    conn = get_connection()
+    try:
+        rows = [
+            dict(r)
+            for r in conn.execute(
+                "SELECT code, name, market, industry, market_cap FROM stocks "
+                "WHERE market IN ('KOSPI', 'KOSDAQ') AND market_cap IS NOT NULL "
+                "ORDER BY market_cap DESC LIMIT ?",
+                (limit,),
+            ).fetchall()
+        ]
+    finally:
+        conn.close()
+
+    prefetch_price_histories([r["code"] for r in rows])
+
+    records = []
+    for r in rows:
+        prices = get_price_history(r["code"])
+        if len(prices) < 2:
+            continue
+        idx = prices.index[-1]
+        last_date = idx.strftime("%Y-%m-%d") if hasattr(idx, "strftime") else str(idx)[:10]
+        if last_date != today:  # 오늘 데이터가 없는 종목은 뺀다 (거래정지 등)
+            continue
+        prev, last = float(prices.iloc[-2]), float(prices.iloc[-1])
+        if prev <= 0:
+            continue
+        records.append({
+            "Code": r["code"],
+            "Name": r["name"],
+            "Market": r["market"],
+            "Industry": r["industry"],
+            "Marcap": float(r["market_cap"]),
+            "ChagesRatio": (last / prev - 1) * 100,
+        })
+
+    if len(records) < FALLBACK_MIN:
+        raise ValueError(f"오늘 가격이 확보된 종목이 {len(records)}개뿐이라 시황을 만들지 않는다")
+    return pd.DataFrame(records)
+
+
 def generate() -> tuple[str, str]:
     """(제목, 본문) 반환. 휴장일이면 MarketClosed 예외."""
     d = _kst_today()
@@ -241,16 +306,26 @@ def generate() -> tuple[str, str]:
     seed = date_str  # 같은 날은 같은 문장, 날마다 다른 문장
     title = f"{d.year}년 {d.month}월 {d.day}일 국내 증시 시황 요약"
 
-    listing = fdr.StockListing("KRX")[
-        ["Code", "Name", "Market", "ChagesRatio", "Amount", "Marcap"]
-    ].dropna(subset=["ChagesRatio", "Marcap"])
-
-    # 업종 정보 조인 (실패해도 나머지 요약은 그대로 생성)
+    scope_note = ""
     try:
-        desc = fdr.StockListing("KRX-DESC")[["Code", "Industry"]]
-        listing = listing.merge(desc, on="Code", how="left")
-    except Exception:
-        pass
+        listing = fdr.StockListing("KRX")[
+            ["Code", "Name", "Market", "ChagesRatio", "Amount", "Marcap"]
+        ].dropna(subset=["ChagesRatio", "Marcap"])
+
+        # 업종 정보 조인 (실패해도 나머지 요약은 그대로 생성)
+        try:
+            desc = fdr.StockListing("KRX-DESC")[["Code", "Industry"]]
+            listing = listing.merge(desc, on="Code", how="left")
+        except Exception:
+            pass
+    except Exception as e:
+        # 전종목 API가 죽어도 글은 나가야 한다 — 지나간 날은 되살릴 수 없다
+        print(f"[summary] 전종목 API 실패, 가격 캐시로 집계한다: {e}", flush=True)
+        listing = _listing_from_price_cache(date_str)
+        scope_note = (
+            f" 이날 집계는 시가총액 상위 {len(listing):,}개 종목을 대상으로 했으며, "
+            f"거래대금 항목은 포함되지 않았습니다."
+        )
 
     kospi = listing[listing["Market"] == "KOSPI"]
     kosdaq = listing[listing["Market"] == "KOSDAQ"]
@@ -263,7 +338,7 @@ def generate() -> tuple[str, str]:
         f"오늘({d.month}월 {d.day}일) 국내 증시 마감 데이터를 종목·업종 단위로 정리했습니다. "
         f"집계 대상은 상장 종목 {len(listing):,}개입니다.",
     ]
-    parts = [_pick(intros, seed + "i")]
+    parts = [_pick(intros, seed + "i") + scope_note]
 
     # 1) 시장 전반
     breadth = [_market_breadth(kospi, "코스피", seed), _market_breadth(kosdaq, "코스닥", seed)]
@@ -319,10 +394,11 @@ def generate() -> tuple[str, str]:
     if not mid.empty:
         vol = mid.reindex(mid["ChagesRatio"].abs().sort_values(ascending=False).index).head(3)
         joined = ", ".join(f"{r.Name}({_pct(r.ChagesRatio)})" for r in vol.itertuples())
+        mid_n = len(mid)  # 표본이 300개보다 작을 수 있다
         opts = [
-            f"시가총액 상위 300개 종목 중 등락폭이 컸던 종목은 {joined}입니다.",
+            f"시가총액 상위 {mid_n}개 종목 중 등락폭이 컸던 종목은 {joined}입니다.",
             f"주요 종목 가운데 변동폭이 두드러진 곳은 {joined}입니다.",
-            f"시총 상위 300개 안에서 가장 크게 움직인 종목은 {joined}입니다.",
+            f"시총 상위 {mid_n}개 안에서 가장 크게 움직인 종목은 {joined}입니다.",
         ]
         parts.append(_pick(opts, seed + "v"))
 
