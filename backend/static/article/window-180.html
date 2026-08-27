@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="동조 분석의 계산 구간을 180일로 정한 이유와, 구간을 짧게 또는 길게 잡았을 때 생기는 문제를 설명합니다." />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="왜 하필 180일인가 — 기간 선택이 결과를 바꾼다" />
+<link rel="canonical" href="https://stock-recommender-0swa.onrender.com/static/article/window-180.html" />
+<title>왜 하필 180일인가 — 기간 선택이 결과를 바꾼다 | 스톡메이트(StockMate)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<style>
+  body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; }
+</style>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4920759454915079" crossorigin="anonymous"></script>
+</head>
+<body class="min-h-screen" style="background: radial-gradient(1200px 500px at 50% -10%, #eef2ff, #f8fafc);">
+  <div class="max-w-2xl mx-auto px-4 py-10">
+    <a href="/static/guide.html" class="text-sm text-indigo-600 hover:underline">← 지표 설명으로</a>
+
+    <article class="mt-4">
+      <div class="text-xs font-bold text-indigo-600 tracking-wide mb-2">읽을거리</div>
+      <h1 class="text-2xl font-extrabold text-slate-900 leading-snug">왜 하필 180일인가</h1>
+      <p class="text-sm text-slate-500 mt-2">계산 구간을 늘리거나 줄이면 무엇이 달라지는지</p>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mt-5 text-sm text-slate-700 leading-relaxed space-y-4">
+        <p>스톡메이트의 모든 동조 지표는 <strong>최근 180일</strong>의 일별 종가로 계산합니다. 달력 기준 180일이므로 거래일로는 대략 120일, 약 6개월치입니다.</p>
+        <p>이 숫자에 이론적 근거가 있는 것은 아닙니다. 짧게 잡을 때와 길게 잡을 때의 문제를 저울질한 결과입니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">짧게 잡으면 — 사건 하나가 지배한다</h2>
+        <p>구간을 30일로 줄이면 거래일이 20일 남짓입니다. 이 정도면 상승일이 10일 안팎이고, 그중 하루 이틀의 큰 움직임이 결과 전체를 흔듭니다.</p>
+        <p>실제로 짧은 구간에서는 <strong>실적 발표 한 번, 공시 하나로 상위권 순서가 통째로 바뀝니다.</strong> "이 두 종목은 함께 오르는 경향이 있다"가 아니라 "지난달 어느 날 둘 다 올랐다"에 가까운 이야기가 됩니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">길게 잡으면 — 지나간 회사를 본다</h2>
+        <p>반대로 3년치로 늘리면 표본은 넉넉해집니다. 하지만 그 사이 회사가 달라집니다. 주력 사업을 바꾸거나, 큰 인수를 하거나, 사업부를 떼어낸 회사의 3년 전 주가 움직임은 지금과 다른 회사의 기록입니다.</p>
+        <p>업종 구성도 바뀝니다. 신규 상장 종목은 아예 데이터가 없어 비교에서 빠집니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">180일의 자리</h2>
+        <p>6개월이면 거래일 120일 안팎, 상승일은 대략 60일 전후가 나옵니다. 확률을 이야기할 만한 표본이면서, 회사의 성격이 크게 달라지기에는 짧은 기간입니다.</p>
+        <p>여기에 더해 최소 기준을 별도로 두었습니다.</p>
+        <ul class="list-disc pl-5 space-y-1"><li>두 종목의 거래일이 겹치는 날이 20일 미만이면 계산에서 제외합니다</li><li>검색 종목의 상승일이 10일 미만이면 확률을 산출하지 않습니다</li></ul>
+        <p>신규 상장이나 장기 거래정지 종목이 얇은 데이터로 상위권에 올라오는 것을 막기 위한 장치입니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">그래서 감안할 점</h2>
+        <p>180일 안에 큰 사건이 있었다면 그 영향이 지표에 남아 있습니다. 반대로 <strong>180일보다 오래된 관계는 보이지 않습니다.</strong> 수치는 특정 창을 통해 본 한 장면이며, 창을 옮기면 그림도 달라집니다.</p>
+        <p class="text-xs text-slate-400 pt-3 border-t border-slate-100">
+          ⚠️ 이 글의 설명은 과거 가격 데이터를 집계한 통계에 대한 것입니다.
+          투자 자문이나 특정 종목의 매수·매도 권유가 아니며, 투자 판단과 책임은 이용자 본인에게 있습니다.
+        </p>
+      </div>
+
+      <div class="mt-6 text-sm">
+        <div class="font-bold text-slate-800 mb-2">이어서 읽기</div>
+        <div class="space-y-2">
+          <a href="/static/article/sample-size.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">표본이 작으면 통계가 거짓말한다</a>
+          <a href="/static/article/correlation-pitfalls.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">상관계수 0.7은 높은 걸까</a>
+        </div>
+      </div>
+    </article>
+
+    <footer class="mt-12 pt-6 border-t border-slate-200 text-xs text-slate-400">
+      <div class="flex flex-wrap gap-x-4 gap-y-2">
+        <a href="/blog" class="hover:underline">오늘의 시황</a>
+        <a href="/static/guide.html" class="hover:underline">지표 설명</a>
+        <a href="/static/about.html" class="hover:underline">소개 · 문의</a>
+        <a href="/static/privacy.html" class="hover:underline">개인정보처리방침</a>
+        <a href="/static/terms.html" class="hover:underline">이용약관</a>
+      </div>
+      <p class="mt-3 leading-relaxed">스톡메이트(StockMate) · 문의 opedband@naver.com</p>
+    </footer>
+  </div>
+</body>
+</html>

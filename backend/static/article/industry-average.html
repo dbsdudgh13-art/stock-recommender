@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="업종 평균 등락률은 종목 수와 함께 봐야 의미가 생깁니다. 평균이 왜곡되는 경우와 최소 종목 수 기준을 둔 이유를 설명합니다." />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="업종 평균 등락률이 말해주는 것" />
+<link rel="canonical" href="https://stock-recommender-0swa.onrender.com/static/article/industry-average.html" />
+<title>업종 평균 등락률이 말해주는 것 | 스톡메이트(StockMate)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<style>
+  body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; }
+</style>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4920759454915079" crossorigin="anonymous"></script>
+</head>
+<body class="min-h-screen" style="background: radial-gradient(1200px 500px at 50% -10%, #eef2ff, #f8fafc);">
+  <div class="max-w-2xl mx-auto px-4 py-10">
+    <a href="/static/guide.html" class="text-sm text-indigo-600 hover:underline">← 지표 설명으로</a>
+
+    <article class="mt-4">
+      <div class="text-xs font-bold text-indigo-600 tracking-wide mb-2">읽을거리</div>
+      <h1 class="text-2xl font-extrabold text-slate-900 leading-snug">업종 평균이라는 숫자</h1>
+      <p class="text-sm text-slate-500 mt-2">업종 하나의 평균 등락률을 볼 때 반드시 함께 봐야 하는 것</p>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mt-5 text-sm text-slate-700 leading-relaxed space-y-4">
+        <p>종목 페이지와 시황 글 모두에 업종 평균 등락률이 나옵니다. 간단해 보이는 숫자지만 혼자 보면 오해하기 쉽습니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">평균은 종목 수와 함께 봐야 한다</h2>
+        <p>스톡메이트는 업종 평균 옆에 항상 <strong>종목 수</strong>를 같이 적습니다.</p>
+        <div class="bg-slate-50 rounded-xl p-4 text-slate-800 font-medium">반도체 제조업(+5.33%, 14종목)</div>
+        <p>14종목의 평균 +5.33%와 3종목의 평균 +5.33%는 전혀 다른 이야기입니다. 후자는 한 종목이 상한가를 가면 만들어지는 숫자입니다.</p>
+        <p>그래서 시황 글의 업종 집계에는 <strong>최소 5종목</strong> 기준을 뒀습니다. 그보다 적은 업종은 순위에서 아예 제외합니다. 표본이 적은 업종이 상위권을 차지하면 "오늘 강했던 업종"이라는 문장 자체가 거짓이 되기 때문입니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">평균은 이상치에 약하다</h2>
+        <p>업종 평균은 산술평균입니다. 종목 하나가 30% 오르면 10종목짜리 업종의 평균이 3%포인트 올라갑니다. 나머지 9종목이 제자리였어도 그렇습니다.</p>
+        <p>그래서 업종 평균이 눈에 띄게 높을 때는 <strong>그 업종 종목을 실제로 몇 개 열어보는 것</strong>을 권합니다. 종목 페이지에서 같은 업종 종목이 시총 순으로 나열되므로, 평균이 고르게 만들어진 것인지 한 종목이 만든 것인지 금방 보입니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">업종 분류 자체의 한계</h2>
+        <p>평균을 내기 전에 "이 업종에 묶인 종목들이 정말 비슷한가"라는 질문이 남습니다. 한국거래소 분류는 회사가 등록한 주된 사업 기준이라, 사업부가 여럿인 대기업은 직관과 다르게 분류됩니다.</p>
+        <p>업종 평균을 볼 때는 이 점을 감안해야 합니다. 자세한 내용은 <a href="/static/article/industry-classification.html" class="text-indigo-600 hover:underline">업종 분류가 어긋나는 이유</a>에 정리했습니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">정리하면</h2>
+        <ul class="list-disc pl-5 space-y-1"><li>평균만 보지 말고 종목 수를 함께 볼 것</li><li>5종목 미만 업종의 평균은 신뢰하기 어려움</li><li>평균이 유난히 높으면 한 종목이 만든 값인지 확인할 것</li><li>업종 라벨이 사업 내용과 늘 일치하지는 않음</li></ul>
+        <p class="text-xs text-slate-400 pt-3 border-t border-slate-100">
+          ⚠️ 이 글의 설명은 과거 가격 데이터를 집계한 통계에 대한 것입니다.
+          투자 자문이나 특정 종목의 매수·매도 권유가 아니며, 투자 판단과 책임은 이용자 본인에게 있습니다.
+        </p>
+      </div>
+
+      <div class="mt-6 text-sm">
+        <div class="font-bold text-slate-800 mb-2">이어서 읽기</div>
+        <div class="space-y-2">
+          <a href="/static/article/industry-classification.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">삼성전자는 왜 반도체 업종이 아닐까</a>
+          <a href="/static/article/sample-size.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">표본이 작으면 통계가 거짓말한다</a>
+        </div>
+      </div>
+    </article>
+
+    <footer class="mt-12 pt-6 border-t border-slate-200 text-xs text-slate-400">
+      <div class="flex flex-wrap gap-x-4 gap-y-2">
+        <a href="/blog" class="hover:underline">오늘의 시황</a>
+        <a href="/static/guide.html" class="hover:underline">지표 설명</a>
+        <a href="/static/about.html" class="hover:underline">소개 · 문의</a>
+        <a href="/static/privacy.html" class="hover:underline">개인정보처리방침</a>
+        <a href="/static/terms.html" class="hover:underline">이용약관</a>
+      </div>
+      <p class="mt-3 leading-relaxed">스톡메이트(StockMate) · 문의 opedband@naver.com</p>
+    </footer>
+  </div>
+</body>
+</html>

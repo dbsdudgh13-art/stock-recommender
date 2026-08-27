@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="동반 상승 확률과 상관계수는 서로 다른 것을 측정합니다. 두 값이 엇갈리는 네 가지 조합을 어떻게 해석해야 하는지 정리했습니다." />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="동반 상승 확률과 상관계수, 무엇을 먼저 봐야 하나" />
+<link rel="canonical" href="https://stock-recommender-0swa.onrender.com/static/article/which-metric-first.html" />
+<title>동반 상승 확률과 상관계수, 무엇을 먼저 봐야 하나 | 스톡메이트(StockMate)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<style>
+  body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; }
+</style>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4920759454915079" crossorigin="anonymous"></script>
+</head>
+<body class="min-h-screen" style="background: radial-gradient(1200px 500px at 50% -10%, #eef2ff, #f8fafc);">
+  <div class="max-w-2xl mx-auto px-4 py-10">
+    <a href="/static/guide.html" class="text-sm text-indigo-600 hover:underline">← 지표 설명으로</a>
+
+    <article class="mt-4">
+      <div class="text-xs font-bold text-indigo-600 tracking-wide mb-2">읽을거리</div>
+      <h1 class="text-2xl font-extrabold text-slate-900 leading-snug">두 지표가 엇갈릴 때</h1>
+      <p class="text-sm text-slate-500 mt-2">확률은 높은데 상관계수가 낮은 종목, 그 반대인 종목을 어떻게 읽을까</p>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mt-5 text-sm text-slate-700 leading-relaxed space-y-4">
+        <p>종목 페이지를 보다 보면 <strong>동반 상승 확률은 높은데 상관계수는 낮은</strong> 종목, 또는 그 반대인 종목을 만나게 됩니다. 지표가 고장 난 게 아니라 둘이 서로 다른 것을 재고 있기 때문입니다.</p>
+        <p>동반 상승 확률은 <strong>방향</strong>만 셉니다. 오르면 1, 아니면 0. 얼마나 올랐는지는 보지 않습니다. 상관계수는 <strong>크기까지</strong> 봅니다. 하루에 5% 오른 날과 0.1% 오른 날을 다르게 취급합니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">네 가지 조합</h2>
+        <p><strong>확률 높음 + 상관계수 높음</strong> — 가장 단순한 경우입니다. 방향도 크기도 함께 움직였습니다. 같은 그룹사이거나 사실상 같은 사업을 하는 회사에서 자주 나옵니다.</p>
+        <p><strong>확률 높음 + 상관계수 낮음</strong> — 같은 날 오르내리긴 하는데 폭이 제각각입니다. 시장 전체 흐름은 같이 타지만 개별 재료가 따로 도는 종목입니다. 업종은 같아도 규모나 사업 비중이 다를 때 흔합니다.</p>
+        <p><strong>확률 낮음 + 상관계수 높음</strong> — 드물지만 나옵니다. 평소엔 따로 놀다가 특정 며칠에만 크게 같이 움직인 경우입니다. 상관계수는 큰 값 몇 개에 끌려가기 때문에 이런 일이 생깁니다. <strong>가장 조심해야 할 조합</strong>입니다.</p>
+        <p><strong>둘 다 낮음</strong> — 업종만 같을 뿐 실제로는 관계가 옅습니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">그래서 무엇을 먼저 보나</h2>
+        <p><strong>동반 상승 확률을 먼저</strong> 보시길 권합니다. 이유는 단순합니다. 하루짜리 사건에 덜 흔들리기 때문입니다.</p>
+        <p>상관계수는 유상증자 발표, 대량 계약 공시, 상한가 같은 단발성 사건 하나로 값이 크게 움직입니다. 반면 확률은 그런 날도 "오른 날 한 번"으로만 세기 때문에 전체 그림이 덜 왜곡됩니다.</p>
+        <p>스톡메이트가 동조 점수에서 확률에 55%, 상관계수에 30%를 준 것도 같은 이유입니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">실제로 이렇게 읽으면 됩니다</h2>
+        <ul class="list-disc pl-5 space-y-1"><li>확률 70% 이상이면 "자주 같이 올랐다"고 말할 수 있습니다</li><li>거기에 상관계수까지 0.6을 넘으면 크기도 비슷하게 움직였다는 뜻입니다</li><li>확률이 50%대라면 동전 던지기와 큰 차이가 없습니다. 업종이 같다는 것 이상의 정보는 아닙니다</li></ul>
+        <p>어느 조합이든 <strong>과거 180일의 기록</strong>이라는 점은 같습니다. 회사의 사업이 바뀌거나 시장 환경이 달라지면 관계는 끊어집니다.</p>
+        <p class="text-xs text-slate-400 pt-3 border-t border-slate-100">
+          ⚠️ 이 글의 설명은 과거 가격 데이터를 집계한 통계에 대한 것입니다.
+          투자 자문이나 특정 종목의 매수·매도 권유가 아니며, 투자 판단과 책임은 이용자 본인에게 있습니다.
+        </p>
+      </div>
+
+      <div class="mt-6 text-sm">
+        <div class="font-bold text-slate-800 mb-2">이어서 읽기</div>
+        <div class="space-y-2">
+          <a href="/static/article/comovement-score.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">동조 점수는 어떻게 계산되나</a>
+          <a href="/static/article/correlation-pitfalls.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">상관계수 0.7은 높은 걸까</a>
+        </div>
+      </div>
+    </article>
+
+    <footer class="mt-12 pt-6 border-t border-slate-200 text-xs text-slate-400">
+      <div class="flex flex-wrap gap-x-4 gap-y-2">
+        <a href="/blog" class="hover:underline">오늘의 시황</a>
+        <a href="/static/guide.html" class="hover:underline">지표 설명</a>
+        <a href="/static/about.html" class="hover:underline">소개 · 문의</a>
+        <a href="/static/privacy.html" class="hover:underline">개인정보처리방침</a>
+        <a href="/static/terms.html" class="hover:underline">이용약관</a>
+      </div>
+      <p class="mt-3 leading-relaxed">스톡메이트(StockMate) · 문의 opedband@naver.com</p>
+    </footer>
+  </div>
+</body>
+</html>

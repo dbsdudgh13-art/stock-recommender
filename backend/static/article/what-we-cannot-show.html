@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="스톡메이트가 제공하지 않는 정보와 그 이유를 정리했습니다. 실시간 시세, 거래대금, 재무 정보, 미국 종목 가격, ETF 등입니다." />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="이 사이트가 보여주지 못하는 것들" />
+<link rel="canonical" href="https://stock-recommender-0swa.onrender.com/static/article/what-we-cannot-show.html" />
+<title>이 사이트가 보여주지 못하는 것들 | 스톡메이트(StockMate)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<style>
+  body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; }
+</style>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4920759454915079" crossorigin="anonymous"></script>
+</head>
+<body class="min-h-screen" style="background: radial-gradient(1200px 500px at 50% -10%, #eef2ff, #f8fafc);">
+  <div class="max-w-2xl mx-auto px-4 py-10">
+    <a href="/static/guide.html" class="text-sm text-indigo-600 hover:underline">← 지표 설명으로</a>
+
+    <article class="mt-4">
+      <div class="text-xs font-bold text-indigo-600 tracking-wide mb-2">읽을거리</div>
+      <h1 class="text-2xl font-extrabold text-slate-900 leading-snug">데이터의 경계</h1>
+      <p class="text-sm text-slate-500 mt-2">무료 데이터로 할 수 있는 일과 없는 일</p>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mt-5 text-sm text-slate-700 leading-relaxed space-y-4">
+        <p>무엇을 보여주는지만큼 무엇을 보여주지 <em>않는지</em>도 알아야 데이터를 제대로 씁니다. 스톡메이트가 다루지 않는 것들을 정리했습니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">실시간 시세</h2>
+        <p>모든 수치는 <strong>일별 종가</strong> 기준입니다. 장중 가격은 다루지 않습니다. 실시간 시세는 거래소와 계약이 필요한 유료 데이터이고, 이 사이트의 목적인 "과거에 함께 올랐는가"에는 종가로 충분합니다.</p>
+        <p>데이터 갱신은 평일 저녁 한 번입니다. 장중에 보시는 숫자는 전 거래일 기준입니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">재무 정보</h2>
+        <p>매출, 영업이익, 부채비율 같은 재무 데이터는 다루지 않습니다. 이 사이트는 <strong>가격이 어떻게 움직였는지</strong>만 봅니다. 회사가 좋은 회사인지, 저평가인지는 여기서 답할 수 없는 질문입니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">미국 종목의 가격</h2>
+        <p>S&amp;P500 종목은 이름과 업종만 표시되고 가격·등락률이 비어 있습니다. 무료 데이터 소스에 미국 종목의 <strong>일괄 시세</strong>가 없기 때문입니다.</p>
+        <p>다만 동조 분석은 미국 종목도 정상 작동합니다. 과거 주가 히스토리는 조회 시점에 필요한 종목만 개별로 받아오기 때문입니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">거래대금이 빠지는 날</h2>
+        <p>시황 글에는 보통 거래대금 상위 종목이 들어갑니다. 그런데 전종목 데이터를 받아오는 경로가 실패하는 날이 있습니다. 그럴 때는 개별 종목 가격으로 대체 집계하는데, 이 경로로는 거래대금을 얻을 수 없어 해당 문단이 빠집니다.</p>
+        <p>그런 날의 글에는 집계 범위가 본문에 명시됩니다. 없는 데이터를 추정해서 채우지 않습니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">ETF·리츠·선물</h2>
+        <p>개별 주식만 지원합니다. ETF와 리츠는 여러 자산을 묶은 상품이라 "같은 업종 종목과의 동조"라는 개념이 그대로 적용되지 않습니다. 억지로 넣기보다 지원하지 않는 편이 낫다고 판단했습니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">그리고 미래</h2>
+        <p>가장 중요한 항목입니다. 이 사이트는 <strong>앞으로 오를 종목을 고르지 않습니다.</strong> 모든 수치는 과거 기록이며, 같은 관계가 이어진다는 보장은 어디에도 없습니다.</p>
+        <p class="text-xs text-slate-400 pt-3 border-t border-slate-100">
+          ⚠️ 이 글의 설명은 과거 가격 데이터를 집계한 통계에 대한 것입니다.
+          투자 자문이나 특정 종목의 매수·매도 권유가 아니며, 투자 판단과 책임은 이용자 본인에게 있습니다.
+        </p>
+      </div>
+
+      <div class="mt-6 text-sm">
+        <div class="font-bold text-slate-800 mb-2">이어서 읽기</div>
+        <div class="space-y-2">
+          <a href="/static/article/faq.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">자주 묻는 질문</a>
+          <a href="/static/article/reading-market-summary.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">시황 글 읽는 법</a>
+        </div>
+      </div>
+    </article>
+
+    <footer class="mt-12 pt-6 border-t border-slate-200 text-xs text-slate-400">
+      <div class="flex flex-wrap gap-x-4 gap-y-2">
+        <a href="/blog" class="hover:underline">오늘의 시황</a>
+        <a href="/static/guide.html" class="hover:underline">지표 설명</a>
+        <a href="/static/about.html" class="hover:underline">소개 · 문의</a>
+        <a href="/static/privacy.html" class="hover:underline">개인정보처리방침</a>
+        <a href="/static/terms.html" class="hover:underline">이용약관</a>
+      </div>
+      <p class="mt-3 leading-relaxed">스톡메이트(StockMate) · 문의 opedband@naver.com</p>
+    </footer>
+  </div>
+</body>
+</html>

@@ -16,7 +16,7 @@ _HEAD = """<!doctype html>
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta name="description" content="{desc}" />
+<meta name="description" content="{desc}" />{robots}
 <meta property="og:type" content="{og_type}" />
 <meta property="og:title" content="{og_title}" />
 <meta property="og:description" content="{desc}" />
@@ -36,7 +36,6 @@ _FOOTER = """
     <footer class="mt-12 pt-6 border-t border-slate-200 text-xs text-slate-400">
       <div class="flex flex-wrap gap-x-4 gap-y-2">
         <a href="/blog" class="hover:underline">오늘의 시황</a>
-        <a href="/stocks" class="hover:underline">종목 목록</a>
         <a href="/static/guide.html" class="hover:underline">지표 설명</a>
         <a href="/static/about.html" class="hover:underline">소개 · 문의</a>
         <a href="/static/privacy.html" class="hover:underline">개인정보처리방침</a>
@@ -48,6 +47,11 @@ _FOOTER = """
 </body>
 </html>
 """
+
+
+# 종목 페이지 3,375개는 서로 구조가 같아 "가치 없는 콘텐츠"로 판정됐다(애드센스 2026-08-25 반려).
+# 기능은 그대로 두되 색인 대상에서 뺀다. 어차피 전부 "발견됨 - 색인되지 않음" 상태라 잃을 트래픽이 없다.
+NOINDEX = '\n<meta name="robots" content="noindex, follow" />'
 
 
 def _esc(s: str) -> str:
@@ -69,6 +73,7 @@ def render_blog_list(posts: list[dict]) -> str:
         desc=_esc(desc),
         url=f"{SITE_URL}/blog",
         og_type="website",
+        robots="",
     )
 
     if posts:
@@ -134,6 +139,7 @@ def render_stock(stock: dict, peers: list[dict], stats: dict, combo: list[dict] 
         desc=_esc(desc),
         url=f"{SITE_URL}/stock/{_esc(code)}",
         og_type="article",
+        robots=NOINDEX,
     )
 
     price_row = ""
@@ -244,6 +250,7 @@ def render_stock_list(stocks: list[dict], page: int, total_pages: int, total: in
         desc=_esc(desc),
         url=url,
         og_type="website",
+        robots=NOINDEX,
     )
 
     rows = "".join(
@@ -297,6 +304,7 @@ def render_post(post: dict, prev_post: dict | None = None, next_post: dict | Non
         desc=_esc(desc),
         url=f"{SITE_URL}/post/{post['id']}",
         og_type="article",
+        robots="",
     )
 
     paragraphs = "".join(

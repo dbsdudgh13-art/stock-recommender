@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="시가총액의 계산 방법과, 스톡메이트가 종목 정렬과 후보 선정에 시가총액을 쓰는 이유를 설명합니다." />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="시가총액은 무엇이고 왜 순위 기준으로 쓰나" />
+<link rel="canonical" href="https://stock-recommender-0swa.onrender.com/static/article/market-cap.html" />
+<title>시가총액은 무엇이고 왜 순위 기준으로 쓰나 | 스톡메이트(StockMate)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<style>
+  body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; }
+</style>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4920759454915079" crossorigin="anonymous"></script>
+</head>
+<body class="min-h-screen" style="background: radial-gradient(1200px 500px at 50% -10%, #eef2ff, #f8fafc);">
+  <div class="max-w-2xl mx-auto px-4 py-10">
+    <a href="/static/guide.html" class="text-sm text-indigo-600 hover:underline">← 지표 설명으로</a>
+
+    <article class="mt-4">
+      <div class="text-xs font-bold text-indigo-600 tracking-wide mb-2">읽을거리</div>
+      <h1 class="text-2xl font-extrabold text-slate-900 leading-snug">시가총액이라는 기준</h1>
+      <p class="text-sm text-slate-500 mt-2">주가가 비싼 회사와 큰 회사는 다르다</p>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mt-5 text-sm text-slate-700 leading-relaxed space-y-4">
+        <p>스톡메이트는 종목을 나열할 때 거의 항상 시가총액 순으로 정렬합니다. 같은 업종 종목 목록도, 동조 분석 후보도 그렇습니다. 왜 이 기준인지 짚어 두겠습니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">계산은 단순하다</h2>
+        <div class="bg-slate-50 rounded-xl p-4 text-slate-800 font-medium">시가총액 = 주가 × 발행주식수</div>
+        <p>주가만으로는 회사의 크기를 알 수 없습니다. 주가 50만원짜리 회사보다 5,000원짜리 회사가 더 클 수 있습니다. 발행주식수가 100배 많으면 그렇습니다.</p>
+        <p>그래서 "큰 회사"를 말할 때는 주가가 아니라 시가총액을 씁니다. 시장이 그 회사 전체에 매긴 가격입니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">왜 정렬 기준으로 쓰나</h2>
+        <p>세 가지 이유입니다.</p>
+        <ul class="list-disc pl-5 space-y-1"><li><strong>데이터가 안정적입니다.</strong> 시총이 큰 종목은 거래가 활발해 가격 데이터에 빈 구멍이 적습니다. 통계를 내기에 적합합니다</li><li><strong>이용자가 찾는 종목이 대체로 상위에 있습니다.</strong> 검색량이 많은 종목과 시총 상위 종목은 상당히 겹칩니다</li><li><strong>임의성이 없습니다.</strong> 저희가 고른 순서가 아니라 시장이 매긴 순서입니다</li></ul>
+        <h2 class="font-bold text-slate-800 text-base pt-2">동조 분석에서의 쓰임</h2>
+        <p>같은 업종에서 비교 후보를 고를 때, 시가총액 상위 15개 종목을 후보군으로 잡습니다. 업종에 종목이 100개여도 전부 비교하지 않습니다.</p>
+        <p>거래가 뜸한 소형 종목은 가격이 며칠씩 움직이지 않는 일이 잦아, 상관계수나 확률이 실제 관계보다 왜곡되어 나오기 쉽습니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">한계도 있다</h2>
+        <p>시가총액 순 정렬은 <strong>중소형주를 뒤로 밀어냅니다.</strong> 관심 종목이 시총 하위권이라면 목록에서 찾기 어려울 수 있습니다. 그럴 때는 검색창에 종목명이나 코드를 직접 입력하시면 됩니다.</p>
+        <p>또 시가총액은 주가에 따라 매일 바뀝니다. 사이트에 표시되는 값은 마지막 데이터 갱신 시점 기준입니다.</p>
+        <p class="text-xs text-slate-400 pt-3 border-t border-slate-100">
+          ⚠️ 이 글의 설명은 과거 가격 데이터를 집계한 통계에 대한 것입니다.
+          투자 자문이나 특정 종목의 매수·매도 권유가 아니며, 투자 판단과 책임은 이용자 본인에게 있습니다.
+        </p>
+      </div>
+
+      <div class="mt-6 text-sm">
+        <div class="font-bold text-slate-800 mb-2">이어서 읽기</div>
+        <div class="space-y-2">
+          <a href="/static/article/what-we-cannot-show.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">이 사이트가 보여주지 못하는 것들</a>
+          <a href="/static/article/industry-average.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">업종 평균 등락률이 말해주는 것</a>
+        </div>
+      </div>
+    </article>
+
+    <footer class="mt-12 pt-6 border-t border-slate-200 text-xs text-slate-400">
+      <div class="flex flex-wrap gap-x-4 gap-y-2">
+        <a href="/blog" class="hover:underline">오늘의 시황</a>
+        <a href="/static/guide.html" class="hover:underline">지표 설명</a>
+        <a href="/static/about.html" class="hover:underline">소개 · 문의</a>
+        <a href="/static/privacy.html" class="hover:underline">개인정보처리방침</a>
+        <a href="/static/terms.html" class="hover:underline">이용약관</a>
+      </div>
+      <p class="mt-3 leading-relaxed">스톡메이트(StockMate) · 문의 opedband@naver.com</p>
+    </footer>
+  </div>
+</body>
+</html>

@@ -121,7 +121,15 @@ def ads_txt():
 
 @app.get("/robots.txt", response_class=PlainTextResponse)
 def robots_txt():
-    return f"User-agent: *\nAllow: /\nSitemap: {SITE_URL}/sitemap.xml\n"
+    # 종목 페이지는 서로 구조가 같아 "가치 없는 콘텐츠"로 판정됐다(애드센스 2026-08-25 반려).
+    # 사람은 그대로 쓸 수 있고, 크롤러만 막는다.
+    return (
+        "User-agent: *\n"
+        "Disallow: /stock/\n"
+        "Disallow: /stocks\n"
+        "Allow: /\n"
+        f"Sitemap: {SITE_URL}/sitemap.xml\n"
+    )
 
 
 @app.get("/sitemap.xml", response_class=PlainTextResponse)
@@ -131,7 +139,15 @@ def sitemap_xml():
                     "/static/article/comovement-score.html",
                     "/static/article/correlation-pitfalls.html",
                     "/static/article/industry-classification.html",
-                    "/static/article/faq.html"]
+                    "/static/article/faq.html",
+                    "/static/article/which-metric-first.html",
+                    "/static/article/upside-capture.html",
+                    "/static/article/window-180.html",
+                    "/static/article/sample-size.html",
+                    "/static/article/reading-market-summary.html",
+                    "/static/article/industry-average.html",
+                    "/static/article/market-cap.html",
+                    "/static/article/what-we-cannot-show.html"]
     urls = "".join(f"<url><loc>{SITE_URL}{p}</loc></url>" for p in static_paths)
     # 시황 글 전부 포함 — 크롤러가 개별 글 URL을 알 수 있어야 색인된다
     for p in posts_store.list_posts(1000):
@@ -139,19 +155,8 @@ def sitemap_xml():
             f"<url><loc>{SITE_URL}/post/{p['id']}</loc>"
             f"<lastmod>{p['created_at'][:10]}</lastmod></url>"
         )
-    # 전 종목 페이지 — 색인 대상이 수천 개로 늘어난다 (SEO 핵심)
-    conn = get_connection()
-    try:
-        codes = conn.execute("SELECT code FROM stocks ORDER BY market_cap IS NULL, market_cap DESC").fetchall()
-    finally:
-        conn.close()
-    urls += "".join(f"<url><loc>{SITE_URL}/stock/{r['code']}</loc></url>" for r in codes)
-    # 종목 목록 페이지 — 크롤러가 여기서 종목 페이지로 퍼져 나간다
-    list_pages = max(1, (len(codes) + STOCKS_PER_PAGE - 1) // STOCKS_PER_PAGE)
-    urls += "".join(
-        f"<url><loc>{SITE_URL}/stocks{'' if n == 1 else f'?page={n}'}</loc></url>"
-        for n in range(1, list_pages + 1)
-    )
+    # 종목 페이지·목록은 sitemap에서 뺀다. 3,400개가 구조만 같고 내용이 얇아 사이트 전체가
+    # "가치 없는 콘텐츠"로 판정됐다(애드센스 2026-08-25 반려). 고유 콘텐츠만 색인 대상으로 남긴다.
 
     xml = f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>'
     return PlainTextResponse(xml, media_type="application/xml")
