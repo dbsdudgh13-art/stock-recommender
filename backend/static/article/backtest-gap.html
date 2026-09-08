@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="과거 데이터에 잘 들어맞는 규칙이 실전에서 무너지는 이유를 정리했습니다. 거래 비용, 체결 가능성, 구조 변화, 과최적화 문제를 다룹니다." />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="과거 데이터가 잘 맞아도 미래가 맞지 않는 이유" />
+<link rel="canonical" href="https://stock-recommender-0swa.onrender.com/static/article/backtest-gap.html" />
+<title>과거 데이터가 잘 맞아도 미래가 맞지 않는 이유 | 스톡메이트(StockMate)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<style>
+  body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; }
+</style>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4920759454915079" crossorigin="anonymous"></script>
+</head>
+<body class="min-h-screen" style="background: radial-gradient(1200px 500px at 50% -10%, #eef2ff, #f8fafc);">
+  <div class="max-w-2xl mx-auto px-4 py-10">
+    <a href="/static/guide.html" class="text-sm text-indigo-600 hover:underline">← 지표 설명으로</a>
+
+    <article class="mt-4">
+      <div class="text-xs font-bold text-indigo-600 tracking-wide mb-2">읽을거리</div>
+      <h1 class="text-2xl font-extrabold text-slate-900 leading-snug">검증과 실전 사이</h1>
+      <p class="text-sm text-slate-500 mt-2">과거에 잘 들어맞은 규칙이 앞으로도 통한다는 보장은 없다</p>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mt-5 text-sm text-slate-700 leading-relaxed space-y-4">
+        <p>"이 규칙을 지난 3년에 적용했더니 수익이 났다"는 이야기를 자주 봅니다. 과거 데이터로 규칙을 검증하는 것은 합리적인 출발점이지만, 그 결과가 실전으로 그대로 이어지지 않는 이유가 여럿 있습니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">1. 비용이 빠져 있다</h2>
+        <p>검증에서는 대개 수수료와 세금을 무시합니다. 국내 주식은 매도 시 거래세가 붙고, 매매마다 수수료가 나갑니다. 매매가 잦은 규칙일수록 이 비용이 수익을 갉아먹습니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">2. 체결 가격이 다르다</h2>
+        <p>과거 데이터로 계산할 때는 "종가에 샀다"고 가정합니다. 실제로는 그 가격에 원하는 수량을 살 수 있다는 보장이 없습니다.</p>
+        <p>거래가 뜸한 종목에서는 매수 주문 자체가 가격을 밀어 올립니다. 검증 결과가 좋을수록 이 문제가 커지는 경향이 있습니다. 유동성이 낮은 종목에서 큰 수익률이 나오기 쉽기 때문입니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">3. 시장 구조가 바뀐다</h2>
+        <p>과거 어느 구간에서 통했던 관계가 지금도 유효하다는 근거는 없습니다. 회사가 주력 사업을 바꾸고, 업종의 경쟁 구도가 달라지고, 금리 환경이 뒤집힙니다.</p>
+        <p>스톡메이트가 계산 구간을 180일로 제한한 것도 이 때문입니다. 더 긴 기간을 쓰면 표본은 늘지만 <strong>지금과 다른 회사의 기록</strong>이 섞입니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">4. 찾으면 나온다</h2>
+        <p>가장 근본적인 문제입니다. 데이터를 충분히 뒤지면 무엇이든 잘 맞는 규칙이 나옵니다. 우연히 잘 맞는 규칙과 실제로 의미 있는 규칙은 과거 데이터만으로 구분되지 않습니다.</p>
+        <p>조건을 많이 붙일수록 과거 성적은 좋아지고 미래 성적은 나빠집니다. 과거에만 맞춘 규칙이 되기 때문입니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">스톡메이트의 입장</h2>
+        <p>이 사이트는 매매 규칙을 제안하지 않습니다. "A가 오른 날 B도 올랐다"는 <strong>기록을 세어 보여줄 뿐</strong>이고, 그것으로 무엇을 할지는 다루지 않습니다.</p>
+        <p>의도적인 선택입니다. 규칙을 제안하는 순간 위 네 가지 문제를 모두 떠안게 되고, 그것은 통계 도구가 아니라 투자 자문의 영역입니다.</p>
+        <p class="text-xs text-slate-400 pt-3 border-t border-slate-100">
+          ⚠️ 이 글의 설명은 과거 가격 데이터를 집계한 통계에 대한 것입니다.
+          투자 자문이나 특정 종목의 매수·매도 권유가 아니며, 투자 판단과 책임은 이용자 본인에게 있습니다.
+        </p>
+      </div>
+
+      <div class="mt-6 text-sm">
+        <div class="font-bold text-slate-800 mb-2">이어서 읽기</div>
+        <div class="space-y-2">
+          <a href="/static/article/data-snooping.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">찾으면 나오는 패턴</a>
+          <a href="/static/article/window-180.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">왜 하필 180일인가</a>
+        </div>
+      </div>
+    </article>
+
+    <footer class="mt-12 pt-6 border-t border-slate-200 text-xs text-slate-400">
+      <div class="flex flex-wrap gap-x-4 gap-y-2">
+        <a href="/blog" class="hover:underline">오늘의 시황</a>
+        <a href="/static/guide.html" class="hover:underline">지표 설명</a>
+        <a href="/static/about.html" class="hover:underline">소개 · 문의</a>
+        <a href="/static/privacy.html" class="hover:underline">개인정보처리방침</a>
+        <a href="/static/terms.html" class="hover:underline">이용약관</a>
+      </div>
+      <p class="mt-3 leading-relaxed">스톡메이트(StockMate) · 문의 opedband@naver.com</p>
+    </footer>
+  </div>
+</body>
+</html>

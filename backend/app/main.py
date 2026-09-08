@@ -127,6 +127,8 @@ def robots_txt():
         "User-agent: *\n"
         "Disallow: /stock/\n"
         "Disallow: /stocks\n"
+        "Disallow: /post/\n"
+        "Disallow: /blog\n"
         "Allow: /\n"
         f"Sitemap: {SITE_URL}/sitemap.xml\n"
     )
@@ -134,27 +136,48 @@ def robots_txt():
 
 @app.get("/sitemap.xml", response_class=PlainTextResponse)
 def sitemap_xml():
-    static_paths = ["/", "/blog", "/static/guide.html",
-                    "/static/about.html", "/static/privacy.html", "/static/terms.html",
-                    "/static/article/comovement-score.html",
-                    "/static/article/correlation-pitfalls.html",
-                    "/static/article/industry-classification.html",
-                    "/static/article/faq.html",
-                    "/static/article/which-metric-first.html",
-                    "/static/article/upside-capture.html",
-                    "/static/article/window-180.html",
-                    "/static/article/sample-size.html",
-                    "/static/article/reading-market-summary.html",
-                    "/static/article/industry-average.html",
-                    "/static/article/market-cap.html",
-                    "/static/article/what-we-cannot-show.html"]
+    static_paths = [
+        "/",
+        "/blog",
+        "/static/guide.html",
+        "/static/about.html",
+        "/static/privacy.html",
+        "/static/terms.html",
+        "/static/article/comovement-score.html",
+        "/static/article/which-metric-first.html",
+        "/static/article/correlation-pitfalls.html",
+        "/static/article/upside-capture.html",
+        "/static/article/volatility-basics.html",
+        "/static/article/window-180.html",
+        "/static/article/sample-size.html",
+        "/static/article/data-snooping.html",
+        "/static/article/survivorship-bias.html",
+        "/static/article/backtest-gap.html",
+        "/static/article/statistics-checklist.html",
+        "/static/article/mean-vs-median.html",
+        "/static/article/kospi-vs-kosdaq.html",
+        "/static/article/index-weighting.html",
+        "/static/article/market-cap.html",
+        "/static/article/trading-value.html",
+        "/static/article/industry-classification.html",
+        "/static/article/industry-average.html",
+        "/static/article/value-chain.html",
+        "/static/article/preferred-shares.html",
+        "/static/article/price-limits.html",
+        "/static/article/corporate-actions.html",
+        "/static/article/dividend-and-exdate.html",
+        "/static/article/new-listings.html",
+        "/static/article/closing-price-only.html",
+        "/static/article/reading-market-summary.html",
+        "/static/article/free-market-data.html",
+        "/static/article/building-stockmate.html",
+        "/static/article/what-we-cannot-show.html",
+        "/static/article/faq.html",
+    ]
     urls = "".join(f"<url><loc>{SITE_URL}{p}</loc></url>" for p in static_paths)
-    # 시황 글 전부 포함 — 크롤러가 개별 글 URL을 알 수 있어야 색인된다
-    for p in posts_store.list_posts(1000):
-        urls += (
-            f"<url><loc>{SITE_URL}/post/{p['id']}</loc>"
-            f"<lastmod>{p['created_at'][:10]}</lastmod></url>"
-        )
+    # 시황 글도 sitemap에서 뺀다. 규칙 기반으로 자동 생성돼 구조가 매일 같고, 애드센스가
+    # "자동 생성 콘텐츠"로 지목하는 유형이다(2026-08 두 차례 반려). 사이트에서는 그대로
+    # 볼 수 있고, 색인 대상만 사람이 쓴 해설 글 30편과 정적 페이지로 좁힌다.
     # 종목 페이지·목록은 sitemap에서 뺀다. 3,400개가 구조만 같고 내용이 얇아 사이트 전체가
     # "가치 없는 콘텐츠"로 판정됐다(애드센스 2026-08-25 반려). 고유 콘텐츠만 색인 대상으로 남긴다.
 

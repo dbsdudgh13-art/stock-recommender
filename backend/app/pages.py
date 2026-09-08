@@ -73,7 +73,7 @@ def render_blog_list(posts: list[dict]) -> str:
         desc=_esc(desc),
         url=f"{SITE_URL}/blog",
         og_type="website",
-        robots="",
+        robots=NOINDEX,
     )
 
     if posts:
@@ -304,7 +304,7 @@ def render_post(post: dict, prev_post: dict | None = None, next_post: dict | Non
         desc=_esc(desc),
         url=f"{SITE_URL}/post/{post['id']}",
         og_type="article",
-        robots="",
+        robots=NOINDEX,
     )
 
     paragraphs = "".join(

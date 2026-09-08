@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="국내 증시의 가격제한폭 제도가 등락률 데이터와 동조 통계에 어떤 영향을 주는지 설명합니다." />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="상한가·하한가 제도가 통계에 남기는 것" />
+<link rel="canonical" href="https://stock-recommender-0swa.onrender.com/static/article/price-limits.html" />
+<title>상한가·하한가 제도가 통계에 남기는 것 | 스톡메이트(StockMate)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<style>
+  body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; }
+</style>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4920759454915079" crossorigin="anonymous"></script>
+</head>
+<body class="min-h-screen" style="background: radial-gradient(1200px 500px at 50% -10%, #eef2ff, #f8fafc);">
+  <div class="max-w-2xl mx-auto px-4 py-10">
+    <a href="/static/guide.html" class="text-sm text-indigo-600 hover:underline">← 지표 설명으로</a>
+
+    <article class="mt-4">
+      <div class="text-xs font-bold text-indigo-600 tracking-wide mb-2">읽을거리</div>
+      <h1 class="text-2xl font-extrabold text-slate-900 leading-snug">가격제한폭과 데이터</h1>
+      <p class="text-sm text-slate-500 mt-2">30% 벽에 막힌 날의 등락률은 무엇을 뜻하나</p>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mt-5 text-sm text-slate-700 leading-relaxed space-y-4">
+        <p>국내 증시에는 하루 등락폭을 전일 종가 대비 <strong>상하 30%</strong>로 제한하는 규정이 있습니다. 이 제도는 시장 안정에는 도움이 되지만, 데이터에는 흔적을 남깁니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">막힌 값은 진짜 값이 아니다</h2>
+        <p>어떤 종목이 상한가로 마감했다면 등락률은 +29.9% 근처로 기록됩니다. 하지만 이 숫자는 <strong>시장이 매긴 가격이 아니라 제도가 정한 상한</strong>입니다. 제한이 없었다면 +50%였을 수도 있습니다.</p>
+        <p>통계에서는 이런 값을 절단된 데이터라고 부릅니다. 실제 값이 그 이상이라는 것만 알 뿐, 얼마인지는 모릅니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">동조 통계에 미치는 영향</h2>
+        <p>두 종목이 같은 날 나란히 상한가를 갔다면 상승 민감도는 100%에 가깝게 계산됩니다. 둘 다 같은 벽에 막혔기 때문입니다.</p>
+        <p>실제 관계가 어땠는지는 알 수 없습니다. 한 종목은 원래 +40%였고 다른 종목은 +30%였을 수도 있지만, 데이터에는 같은 값으로 남습니다.</p>
+        <p>스톡메이트가 상승 민감도에 1.5배 상한을 두고 비중을 15%로 낮춘 데에는 이런 배경도 있습니다. 극단값 근처에서 이 지표의 신뢰도가 떨어집니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">다음 날로 이어지는 흐름</h2>
+        <p>상한가에 막힌 매수세는 사라지지 않고 다음 날로 넘어가는 경우가 많습니다. 그래서 상한가 다음 날 시가가 크게 뛰는 일이 흔합니다.</p>
+        <p>일별 종가 기준 통계는 이 연속성을 <strong>두 개의 독립적인 상승일</strong>로 셉니다. 하나의 사건이 이틀에 걸쳐 반영된 것인데, 데이터에는 "이틀 연속 함께 올랐다"로 기록됩니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">그래서 어떻게 보나</h2>
+        <p>시황 글에 "10% 이상 급등한 종목 15개" 같은 문장이 나오면, 그중 상당수가 제도상 한계 근처일 수 있다는 점을 감안하십시오.</p>
+        <p>동조 점수가 높은 종목을 볼 때도 마찬가지입니다. 상한가가 잦은 종목끼리는 실제 관계보다 수치가 높게 나오는 경향이 있습니다. 동반 상승 확률에 가장 큰 비중을 둔 것이 이런 왜곡을 줄이는 데 도움이 됩니다.</p>
+        <p class="text-xs text-slate-400 pt-3 border-t border-slate-100">
+          ⚠️ 이 글의 설명은 과거 가격 데이터를 집계한 통계에 대한 것입니다.
+          투자 자문이나 특정 종목의 매수·매도 권유가 아니며, 투자 판단과 책임은 이용자 본인에게 있습니다.
+        </p>
+      </div>
+
+      <div class="mt-6 text-sm">
+        <div class="font-bold text-slate-800 mb-2">이어서 읽기</div>
+        <div class="space-y-2">
+          <a href="/static/article/upside-capture.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">상승 민감도와 베타</a>
+          <a href="/static/article/mean-vs-median.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">평균과 중앙값이 다를 때</a>
+        </div>
+      </div>
+    </article>
+
+    <footer class="mt-12 pt-6 border-t border-slate-200 text-xs text-slate-400">
+      <div class="flex flex-wrap gap-x-4 gap-y-2">
+        <a href="/blog" class="hover:underline">오늘의 시황</a>
+        <a href="/static/guide.html" class="hover:underline">지표 설명</a>
+        <a href="/static/about.html" class="hover:underline">소개 · 문의</a>
+        <a href="/static/privacy.html" class="hover:underline">개인정보처리방침</a>
+        <a href="/static/terms.html" class="hover:underline">이용약관</a>
+      </div>
+      <p class="mt-3 leading-relaxed">스톡메이트(StockMate) · 문의 opedband@naver.com</p>
+    </footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="스톡메이트를 만들고 운영하며 겪은 문제와 그때 내린 판단을 기록했습니다. 데이터 소스 장애, 캐시 설계 오류, 지표 설계 변경 등입니다." />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="이 사이트를 만들며 배운 것" />
+<link rel="canonical" href="https://stock-recommender-0swa.onrender.com/static/article/building-stockmate.html" />
+<title>이 사이트를 만들며 배운 것 | 스톡메이트(StockMate)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<style>
+  body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; }
+</style>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4920759454915079" crossorigin="anonymous"></script>
+</head>
+<body class="min-h-screen" style="background: radial-gradient(1200px 500px at 50% -10%, #eef2ff, #f8fafc);">
+  <div class="max-w-2xl mx-auto px-4 py-10">
+    <a href="/static/guide.html" class="text-sm text-indigo-600 hover:underline">← 지표 설명으로</a>
+
+    <article class="mt-4">
+      <div class="text-xs font-bold text-indigo-600 tracking-wide mb-2">읽을거리</div>
+      <h1 class="text-2xl font-extrabold text-slate-900 leading-snug">만들면서 틀렸던 것들</h1>
+      <p class="text-sm text-slate-500 mt-2">개인이 만든 통계 사이트의 실패 기록</p>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mt-5 text-sm text-slate-700 leading-relaxed space-y-4">
+        <p>이 사이트는 개인이 만들어 운영하고 있습니다. 만드는 과정에서 틀렸던 판단들을 남겨 둡니다. 비슷한 것을 만드는 분께 쓸모가 있을지도 모르겠습니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">지표 비중을 처음엔 잘못 잡았다</h2>
+        <p>초기에는 상관계수에 가장 큰 비중을 줬습니다. 가장 널리 쓰이는 지표이니 당연하다고 생각했습니다.</p>
+        <p>결과를 눈으로 확인해 보니 이상했습니다. 평소에는 전혀 무관하다가 <strong>특정 며칠에만 같이 급등한 종목</strong>이 반복해서 상위에 올라왔습니다. 상관계수가 큰 값 몇 개에 끌려가는 성질 때문이었습니다.</p>
+        <p>그래서 "오른 날 중 며칠이나 같이 올랐는가"라는 단순한 확률에 가장 큰 비중을 옮겼습니다. 덜 세련된 지표지만 결과는 훨씬 납득 가능했습니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">캐시 신선도를 거래일로 판단한 실수</h2>
+        <p>가격 데이터를 캐시하면서, 저장된 마지막 <strong>거래일</strong>이 오래됐으면 다시 받아오도록 만들었습니다. 언뜻 합리적으로 보입니다.</p>
+        <p>실제로는 금요일 종가가 주말 내내 "오래된 데이터"로 판정됐습니다. 토·일에는 새 거래일이 생기지 않는데도 계속 다시 받아온 것입니다. 조회 한 번에 16개 종목을 매번 새로 내려받아 응답이 10초씩 걸렸습니다.</p>
+        <p>고친 방법은 단순했습니다. 거래일이 아니라 <strong>실제로 데이터를 받아온 시각</strong>을 따로 기록해 판단하도록 바꿨습니다. 응답 시간이 10초에서 0.1초 아래로 떨어졌습니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">외부 장애가 배포 실패로 번진 구조</h2>
+        <p>서버가 뜰 때 종목 목록을 받아오도록 해 뒀는데, 이 과정에서 예외가 나면 서버 자체가 기동을 포기했습니다.</p>
+        <p>데이터 제공처가 잠깐 응답하지 않은 날, 배포가 통째로 실패했습니다. 코드에는 아무 문제가 없었는데도 그랬습니다. 남의 사이트 장애가 곧 우리 장애가 되는 구조였습니다.</p>
+        <p>지금은 데이터 적재를 백그라운드로 분리하고, 실패해도 서버는 뜨게 했습니다. 목록을 끝내 못 받으면 저장소에 넣어 둔 스냅샷을 씁니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">배운 것을 한 줄로</h2>
+        <p>통계 서비스에서 어려운 부분은 계산식이 아니었습니다. <strong>데이터가 예상대로 오지 않는 날을 어떻게 다루는가</strong>가 대부분의 일이었습니다.</p>
+        <p class="text-xs text-slate-400 pt-3 border-t border-slate-100">
+          ⚠️ 이 글의 설명은 과거 가격 데이터를 집계한 통계에 대한 것입니다.
+          투자 자문이나 특정 종목의 매수·매도 권유가 아니며, 투자 판단과 책임은 이용자 본인에게 있습니다.
+        </p>
+      </div>
+
+      <div class="mt-6 text-sm">
+        <div class="font-bold text-slate-800 mb-2">이어서 읽기</div>
+        <div class="space-y-2">
+          <a href="/static/article/free-market-data.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">무료 금융 데이터로 어디까지 할 수 있나</a>
+          <a href="/static/article/comovement-score.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">동조 점수는 어떻게 계산되나</a>
+        </div>
+      </div>
+    </article>
+
+    <footer class="mt-12 pt-6 border-t border-slate-200 text-xs text-slate-400">
+      <div class="flex flex-wrap gap-x-4 gap-y-2">
+        <a href="/blog" class="hover:underline">오늘의 시황</a>
+        <a href="/static/guide.html" class="hover:underline">지표 설명</a>
+        <a href="/static/about.html" class="hover:underline">소개 · 문의</a>
+        <a href="/static/privacy.html" class="hover:underline">개인정보처리방침</a>
+        <a href="/static/terms.html" class="hover:underline">이용약관</a>
+      </div>
+      <p class="mt-3 leading-relaxed">스톡메이트(StockMate) · 문의 opedband@naver.com</p>
+    </footer>
+  </div>
+</body>
+</html>

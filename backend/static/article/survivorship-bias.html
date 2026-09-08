@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="상장폐지 종목이 데이터에서 빠지면서 생기는 생존 편향과, 스톡메이트 통계에 이 편향이 어떻게 남아 있는지 설명합니다." />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="생존 편향 — 사라진 종목은 데이터에 없다" />
+<link rel="canonical" href="https://stock-recommender-0swa.onrender.com/static/article/survivorship-bias.html" />
+<title>생존 편향 — 사라진 종목은 데이터에 없다 | 스톡메이트(StockMate)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<style>
+  body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; }
+</style>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4920759454915079" crossorigin="anonymous"></script>
+</head>
+<body class="min-h-screen" style="background: radial-gradient(1200px 500px at 50% -10%, #eef2ff, #f8fafc);">
+  <div class="max-w-2xl mx-auto px-4 py-10">
+    <a href="/static/guide.html" class="text-sm text-indigo-600 hover:underline">← 지표 설명으로</a>
+
+    <article class="mt-4">
+      <div class="text-xs font-bold text-indigo-600 tracking-wide mb-2">읽을거리</div>
+      <h1 class="text-2xl font-extrabold text-slate-900 leading-snug">사라진 종목의 자리</h1>
+      <p class="text-sm text-slate-500 mt-2">상장폐지된 회사가 빠진 데이터가 만드는 착시</p>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mt-5 text-sm text-slate-700 leading-relaxed space-y-4">
+        <p>스톡메이트가 다루는 종목은 <strong>지금 상장돼 있는</strong> 회사들입니다. 당연해 보이지만, 여기에 통계에서 유명한 함정이 하나 숨어 있습니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">생존 편향이란</h2>
+        <p>전쟁 중 귀환한 폭격기의 총알 자국을 분석해 그 부위를 보강하려 했다는 유명한 이야기가 있습니다. 실제로 보강해야 할 곳은 총알 자국이 <strong>없는</strong> 부위였습니다. 그곳에 맞은 비행기는 돌아오지 못했기 때문입니다.</p>
+        <p>주식 데이터도 같습니다. 상장폐지된 회사는 목록에서 사라집니다. 남은 데이터는 <strong>살아남은 회사들의 기록</strong>입니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">어떤 착시가 생기나</h2>
+        <ul class="list-disc pl-5 space-y-1"><li>과거 수익률이 실제보다 좋아 보입니다. 크게 망한 회사가 표본에서 빠졌기 때문입니다</li><li>업종 평균이 실제보다 높게 나옵니다. 그 업종에서 퇴출된 기업이 계산에 없습니다</li><li>"이 업종은 꾸준히 올랐다"는 결론이 살아남은 회사들만 본 결과일 수 있습니다</li></ul>
+        <h2 class="font-bold text-slate-800 text-base pt-2">스톡메이트에서의 영향</h2>
+        <p>동조 분석은 최근 180일만 보기 때문에 영향이 상대적으로 작습니다. 6개월 안에 상장폐지되는 종목은 많지 않습니다.</p>
+        <p>그래도 완전히 자유롭지는 않습니다. 거래정지 상태로 데이터가 끊긴 종목은 <strong>겹치는 거래일 20일 미만</strong> 기준에 걸려 비교에서 빠집니다. 부실 징후가 있는 종목이 조용히 제외되는 셈입니다.</p>
+        <p>즉 "같은 업종에서 함께 오른 종목"이라는 결과는, 최근 6개월을 정상적으로 거래된 종목들 사이의 이야기입니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">어떻게 감안하나</h2>
+        <p>이 사이트의 수치를 "이 업종은 안전하다"는 근거로 쓰지 마십시오. 데이터에 남아 있는 것은 <strong>지금까지 버틴 회사들</strong>이고, 앞으로 어느 회사가 그 목록에서 사라질지는 어떤 통계도 알려주지 않습니다.</p>
+        <p>과거 데이터로 무언가를 판단할 때 "여기 없는 것은 무엇인가"를 먼저 묻는 습관이 도움이 됩니다.</p>
+        <p class="text-xs text-slate-400 pt-3 border-t border-slate-100">
+          ⚠️ 이 글의 설명은 과거 가격 데이터를 집계한 통계에 대한 것입니다.
+          투자 자문이나 특정 종목의 매수·매도 권유가 아니며, 투자 판단과 책임은 이용자 본인에게 있습니다.
+        </p>
+      </div>
+
+      <div class="mt-6 text-sm">
+        <div class="font-bold text-slate-800 mb-2">이어서 읽기</div>
+        <div class="space-y-2">
+          <a href="/static/article/sample-size.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">표본이 작으면 통계가 거짓말한다</a>
+          <a href="/static/article/what-we-cannot-show.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">데이터의 경계</a>
+        </div>
+      </div>
+    </article>
+
+    <footer class="mt-12 pt-6 border-t border-slate-200 text-xs text-slate-400">
+      <div class="flex flex-wrap gap-x-4 gap-y-2">
+        <a href="/blog" class="hover:underline">오늘의 시황</a>
+        <a href="/static/guide.html" class="hover:underline">지표 설명</a>
+        <a href="/static/about.html" class="hover:underline">소개 · 문의</a>
+        <a href="/static/privacy.html" class="hover:underline">개인정보처리방침</a>
+        <a href="/static/terms.html" class="hover:underline">이용약관</a>
+      </div>
+      <p class="mt-3 leading-relaxed">스톡메이트(StockMate) · 문의 opedband@naver.com</p>
+    </footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="액면분할, 무상증자 같은 기업 행위가 주가 데이터에 남기는 불연속과, 수정주가로 이를 보정하는 방법을 설명합니다." />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="액면분할과 무상증자가 과거 데이터에 남기는 것" />
+<link rel="canonical" href="https://stock-recommender-0swa.onrender.com/static/article/corporate-actions.html" />
+<title>액면분할과 무상증자가 과거 데이터에 남기는 것 | 스톡메이트(StockMate)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<style>
+  body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; }
+</style>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4920759454915079" crossorigin="anonymous"></script>
+</head>
+<body class="min-h-screen" style="background: radial-gradient(1200px 500px at 50% -10%, #eef2ff, #f8fafc);">
+  <div class="max-w-2xl mx-auto px-4 py-10">
+    <a href="/static/guide.html" class="text-sm text-indigo-600 hover:underline">← 지표 설명으로</a>
+
+    <article class="mt-4">
+      <div class="text-xs font-bold text-indigo-600 tracking-wide mb-2">읽을거리</div>
+      <h1 class="text-2xl font-extrabold text-slate-900 leading-snug">가격이 갑자기 반토막 났을 때</h1>
+      <p class="text-sm text-slate-500 mt-2">수정주가라는 개념이 필요한 이유</p>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mt-5 text-sm text-slate-700 leading-relaxed space-y-4">
+        <p>어떤 종목의 주가가 하루 만에 5만원에서 1만원이 됐다고 해서 80% 폭락한 것은 아닐 수 있습니다. <strong>액면분할</strong>이 있었다면 주식 수가 다섯 배로 늘어난 것이고, 보유 자산의 가치는 그대로입니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">가격에 불연속을 만드는 사건들</h2>
+        <ul class="list-disc pl-5 space-y-1"><li><strong>액면분할</strong> — 주식 하나를 여러 개로 쪼갭니다. 가격은 그만큼 내려갑니다</li><li><strong>무상증자</strong> — 기존 주주에게 주식을 추가로 나눠줍니다. 역시 주당 가격이 내려갑니다</li><li><strong>액면병합</strong> — 반대로 여러 주를 하나로 합칩니다</li><li><strong>배당락</strong> — 배당받을 권리가 사라지면서 이론상 배당금만큼 가격이 조정됩니다</li></ul>
+        <p>이런 날의 등락률을 그대로 계산하면 -80% 같은 값이 나옵니다. 실제로 일어난 일과 전혀 다른 숫자입니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">수정주가</h2>
+        <p>그래서 금융 데이터에서는 <strong>수정주가</strong>를 씁니다. 과거 가격을 현재 기준에 맞춰 소급 조정한 값입니다. 액면분할이 있었다면 그 이전 가격을 모두 5분의 1로 낮춰 기록하는 식입니다.</p>
+        <p>이렇게 하면 분할일의 등락률이 실제 등락만 반영합니다. 스톡메이트가 쓰는 데이터도 수정주가 기준입니다.</p>
+        <h2 class="font-bold text-slate-800 text-base pt-2">그래도 남는 문제</h2>
+        <p>수정주가는 <strong>과거를 다시 쓰는</strong> 방식입니다. 그래서 몇 가지 부작용이 남습니다.</p>
+        <ul class="list-disc pl-5 space-y-1"><li>오래된 가격일수록 실제 거래됐던 가격과 멀어집니다</li><li>데이터 제공처마다 조정 시점과 방식이 조금씩 달라, 같은 종목의 과거 등락률이 소스마다 다르게 나올 수 있습니다</li><li>배당 조정 여부는 제공처에 따라 갈립니다</li></ul>
+        <h2 class="font-bold text-slate-800 text-base pt-2">동조 통계에서의 영향</h2>
+        <p>두 종목 중 한쪽에만 액면분할이 있었고 조정이 제대로 되지 않았다면, 그날 하루의 큰 값이 상관계수를 흔들 수 있습니다.</p>
+        <p>스톡메이트가 상관계수보다 <strong>동반 상승 확률</strong>에 더 큰 비중을 두는 이유가 여기에도 있습니다. 확률은 방향만 세기 때문에, 조정 오류로 생긴 극단값 하나에 크게 흔들리지 않습니다.</p>
+        <p class="text-xs text-slate-400 pt-3 border-t border-slate-100">
+          ⚠️ 이 글의 설명은 과거 가격 데이터를 집계한 통계에 대한 것입니다.
+          투자 자문이나 특정 종목의 매수·매도 권유가 아니며, 투자 판단과 책임은 이용자 본인에게 있습니다.
+        </p>
+      </div>
+
+      <div class="mt-6 text-sm">
+        <div class="font-bold text-slate-800 mb-2">이어서 읽기</div>
+        <div class="space-y-2">
+          <a href="/static/article/closing-price-only.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">종가만으로 알 수 있는 것</a>
+          <a href="/static/article/price-limits.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">상한가·하한가 제도가 통계에 남기는 것</a>
+        </div>
+      </div>
+    </article>
+
+    <footer class="mt-12 pt-6 border-t border-slate-200 text-xs text-slate-400">
+      <div class="flex flex-wrap gap-x-4 gap-y-2">
+        <a href="/blog" class="hover:underline">오늘의 시황</a>
+        <a href="/static/guide.html" class="hover:underline">지표 설명</a>
+        <a href="/static/about.html" class="hover:underline">소개 · 문의</a>
+        <a href="/static/privacy.html" class="hover:underline">개인정보처리방침</a>
+        <a href="/static/terms.html" class="hover:underline">이용약관</a>
+      </div>
+      <p class="mt-3 leading-relaxed">스톡메이트(StockMate) · 문의 opedband@naver.com</p>
+    </footer>
+  </div>
+</body>
+</html>

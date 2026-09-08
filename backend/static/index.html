@@ -61,6 +61,196 @@
     <div id="results" class="mt-6 space-y-3"></div>
     <div id="similarPanel" class="mt-6"></div>
 
+    <section class="mt-12">
+      <h2 class="text-xl font-extrabold text-slate-900">스톡메이트는 무엇을 보여주나</h2>
+      <p class="text-sm text-slate-600 leading-relaxed mt-2">
+        종목 하나를 검색하면, 같은 업종에 속한 종목들과 최근 180일 동안의 일별 종가를 비교합니다.
+        그중 <strong>검색한 종목이 오른 날</strong>만 골라내 다른 종목이 얼마나 자주, 얼마나 크게 함께 올랐는지를 셉니다.
+        뉴스나 인공지능은 쓰지 않습니다. 공개된 가격 데이터를 집계한 규칙 기반 통계입니다.
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
+        <div class="bg-white rounded-2xl border border-slate-100 p-4">
+          <div class="font-bold text-slate-800 text-sm">동반 상승 확률</div>
+          <p class="text-xs text-slate-600 leading-relaxed mt-1">
+            검색한 종목이 상승 마감한 날 가운데, 비교 종목도 함께 오른 날의 비율입니다.
+            방향만 세기 때문에 하루짜리 급등락에 잘 흔들리지 않습니다.
+          </p>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-100 p-4">
+          <div class="font-bold text-slate-800 text-sm">상관계수</div>
+          <p class="text-xs text-slate-600 leading-relaxed mt-1">
+            두 종목의 일별 수익률이 얼마나 닮았는지를 -1에서 1 사이로 나타냅니다.
+            등락의 크기까지 반영하므로 확률과 함께 봐야 합니다.
+          </p>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-100 p-4">
+          <div class="font-bold text-slate-800 text-sm">상승 민감도</div>
+          <p class="text-xs text-slate-600 leading-relaxed mt-1">
+            함께 오른 날, 검색 종목 상승분의 몇 퍼센트만큼 올랐는지입니다.
+            변동성이 큰 종목에 유리하게 나오므로 상한을 두고 씁니다.
+          </p>
+        </div>
+      </div>
+
+      <p class="text-sm text-slate-600 leading-relaxed mt-4">
+        세 지표를 각각 55%, 30%, 15%의 비중으로 합쳐 0~100점의 <strong>동조 점수</strong>를 만듭니다.
+        비중을 이렇게 나눈 이유와 몇 점부터 의미 있게 볼 수 있는지는
+        <a href="/static/article/comovement-score.html" class="text-indigo-600 hover:underline">동조 점수는 어떻게 계산되나</a>에 계산식 그대로 공개했습니다.
+      </p>
+    </section>
+
+    <section class="mt-10">
+      <h2 class="text-xl font-extrabold text-slate-900">데이터 해설</h2>
+      <p class="text-sm text-slate-500 mt-1 mb-4">숫자를 해석하는 방법과, 그 숫자가 말해주지 않는 것들을 정리했습니다.</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+        <a href="/static/article/comovement-score.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">동조 점수는 어떻게 계산되나</div>
+          <div class="text-xs text-slate-500 mt-1">55 : 30 : 15로 나눈 이유</div>
+        </a>
+        <a href="/static/article/which-metric-first.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">두 지표가 엇갈릴 때</div>
+          <div class="text-xs text-slate-500 mt-1">무엇을 먼저 봐야 하나</div>
+        </a>
+        <a href="/static/article/correlation-pitfalls.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">상관계수 0.7은 높은 걸까</div>
+          <div class="text-xs text-slate-500 mt-1">흔한 오해 세 가지</div>
+        </a>
+        <a href="/static/article/upside-capture.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">상승 민감도와 베타</div>
+          <div class="text-xs text-slate-500 mt-1">재는 대상이 다르다</div>
+        </a>
+        <a href="/static/article/volatility-basics.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">변동성이 크다는 말의 뜻</div>
+          <div class="text-xs text-slate-500 mt-1">많이 오르는 것과 많이 움직이는 것</div>
+        </a>
+        <a href="/static/article/window-180.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">왜 하필 180일인가</div>
+          <div class="text-xs text-slate-500 mt-1">계산 구간이 결과를 바꾸는 방식</div>
+        </a>
+        <a href="/static/article/sample-size.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">표본이 작으면 통계가 거짓말한다</div>
+          <div class="text-xs text-slate-500 mt-1">최소 기준을 둔 이유</div>
+        </a>
+        <a href="/static/article/data-snooping.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">찾으면 나오는 패턴</div>
+          <div class="text-xs text-slate-500 mt-1">3,000개를 뒤지면 무엇이든 나온다</div>
+        </a>
+        <a href="/static/article/survivorship-bias.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">생존 편향</div>
+          <div class="text-xs text-slate-500 mt-1">사라진 종목은 데이터에 없다</div>
+        </a>
+        <a href="/static/article/backtest-gap.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">과거에 맞아도 미래가 맞지 않는 이유</div>
+          <div class="text-xs text-slate-500 mt-1">검증과 실전 사이</div>
+        </a>
+        <a href="/static/article/statistics-checklist.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">투자 정보를 읽을 때 확인할 것들</div>
+          <div class="text-xs text-slate-500 mt-1">던져볼 만한 질문 여섯 개</div>
+        </a>
+        <a href="/static/article/mean-vs-median.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">평균과 중앙값이 다를 때</div>
+          <div class="text-xs text-slate-500 mt-1">평균이 속이는 순간</div>
+        </a>
+        <a href="/static/article/kospi-vs-kosdaq.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">코스피와 코스닥은 무엇이 다른가</div>
+          <div class="text-xs text-slate-500 mt-1">나눠서 집계하는 이유</div>
+        </a>
+        <a href="/static/article/index-weighting.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">지수는 왜 체감과 다른가</div>
+          <div class="text-xs text-slate-500 mt-1">시가총액 가중의 구조</div>
+        </a>
+        <a href="/static/article/market-cap.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">시가총액이라는 기준</div>
+          <div class="text-xs text-slate-500 mt-1">주가가 비싼 회사와 큰 회사</div>
+        </a>
+        <a href="/static/article/trading-value.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">거래대금이라는 지표</div>
+          <div class="text-xs text-slate-500 mt-1">말해주는 것과 말해주지 않는 것</div>
+        </a>
+        <a href="/static/article/industry-classification.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">삼성전자는 왜 반도체 업종이 아닐까</div>
+          <div class="text-xs text-slate-500 mt-1">업종 분류가 어긋나는 이유</div>
+        </a>
+        <a href="/static/article/industry-average.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">업종 평균이라는 숫자</div>
+          <div class="text-xs text-slate-500 mt-1">평균은 종목 수와 함께</div>
+        </a>
+        <a href="/static/article/value-chain.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">같은 업종이어도 위치가 다르다</div>
+          <div class="text-xs text-slate-500 mt-1">밸류체인이라는 층위</div>
+        </a>
+        <a href="/static/article/preferred-shares.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">우선주는 통계에서 어떻게 다뤄지나</div>
+          <div class="text-xs text-slate-500 mt-1">삼성전자와 삼성전자우</div>
+        </a>
+        <a href="/static/article/price-limits.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">가격제한폭과 데이터</div>
+          <div class="text-xs text-slate-500 mt-1">30% 벽에 막힌 등락률</div>
+        </a>
+        <a href="/static/article/corporate-actions.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">액면분할과 무상증자</div>
+          <div class="text-xs text-slate-500 mt-1">수정주가가 필요한 이유</div>
+        </a>
+        <a href="/static/article/dividend-and-exdate.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">배당락</div>
+          <div class="text-xs text-slate-500 mt-1">떨어져도 손해가 아닌 날</div>
+        </a>
+        <a href="/static/article/new-listings.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">신규 상장 종목은 왜 빠지나</div>
+          <div class="text-xs text-slate-500 mt-1">데이터가 없는 종목</div>
+        </a>
+        <a href="/static/article/closing-price-only.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">종가만으로 알 수 있는 것</div>
+          <div class="text-xs text-slate-500 mt-1">하루를 숫자 하나로 줄이면</div>
+        </a>
+        <a href="/static/article/reading-market-summary.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">시황 글 읽는 법</div>
+          <div class="text-xs text-slate-500 mt-1">지수 기여도가 알려주는 것</div>
+        </a>
+        <a href="/static/article/free-market-data.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">무료 금융 데이터의 지형</div>
+          <div class="text-xs text-slate-500 mt-1">이 사이트는 무엇으로 만들어졌나</div>
+        </a>
+        <a href="/static/article/building-stockmate.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">이 사이트를 만들며 배운 것</div>
+          <div class="text-xs text-slate-500 mt-1">틀렸던 판단들의 기록</div>
+        </a>
+        <a href="/static/article/what-we-cannot-show.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">데이터의 경계</div>
+          <div class="text-xs text-slate-500 mt-1">보여주지 못하는 것들</div>
+        </a>
+        <a href="/static/article/faq.html" class="block bg-white rounded-xl border border-slate-100 p-3 hover:border-indigo-200 transition">
+          <div class="font-semibold text-slate-800">자주 묻는 질문</div>
+          <div class="text-xs text-slate-500 mt-1">결과가 매번 바뀌는 이유</div>
+        </a>
+      </div>
+    </section>
+
+    <section class="mt-10">
+      <h2 class="text-xl font-extrabold text-slate-900">데이터와 한계</h2>
+      <div class="text-sm text-slate-600 leading-relaxed mt-2 space-y-3">
+        <p>
+          종목·업종·시세 데이터는 FinanceDataReader를 통해 한국거래소(KRX)와 미국 시장의 공개 데이터를 사용합니다.
+          실시간 시세가 아닌 <strong>일별 종가</strong> 기준이며, 평일 저녁에 하루 한 번 갱신합니다.
+        </p>
+        <p>
+          업종 분류는 한국거래소가 제공하는 값을 가공 없이 그대로 씁니다. 이 분류는 회사가 등록한 주된 사업을 기준으로 하기 때문에,
+          사업부가 여럿인 대기업은 시장의 인식과 다르게 분류되기도 합니다. 삼성전자가 반도체가 아닌
+          '통신 및 방송 장비 제조업'으로 잡히는 것이 그런 경우입니다.
+        </p>
+        <p>
+          미국 S&amp;P500 종목은 무료 데이터 소스에 일괄 시세가 없어 가격과 등락률이 표시되지 않습니다.
+          동조 분석과 업종 분류는 정상 작동합니다. ETF·리츠·선물은 지원하지 않습니다.
+        </p>
+        <p class="text-slate-500">
+          그리고 가장 중요한 점 — 여기 표시되는 모든 숫자는 <strong>과거에 이랬다는 기록</strong>입니다.
+          이 사이트는 앞으로 오를 종목을 고르지 않으며, 특정 종목의 매수·매도를 권유하지 않습니다.
+          투자 판단과 그 결과에 대한 책임은 이용자 본인에게 있습니다.
+        </p>
+      </div>
+    </section>
+
     <footer class="mt-12 pt-6 border-t border-slate-200 text-xs text-slate-400">
       <div class="flex flex-wrap gap-x-4 gap-y-2">
         <a href="/blog" class="hover:underline">오늘의 시황</a>
